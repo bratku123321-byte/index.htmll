@@ -1,1078 +1,579 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resell Calculator PRO</title>
+    <title>Resell Calculator Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { 
-            --bg-main: #0f172a; --bg-panel: #1e293b; --text-main: #f8fafc; 
-            --accent-cyan: #06b6d4; --accent-green: #10b981; --border-color: #334155; 
-            --text-muted: #94a3b8; --accent-red: #ef4444; --accent-purple: #8b5cf6; 
-            --bg-card: #0f172a;
+        :root {
+            --bg-main: #0a0e17;
+            --card-bg: #111827;
+            --card-border: #1f2937;
+            --accent-blue: #2563eb;
+            --accent-blue-hover: #1d4ed8;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --input-bg: #1f2937;
+            --input-border: #374151;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 20px 10px; display: flex; justify-content: center; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
 
-        /* LANGUAGE SELECTOR BAR */
-        .lang-selector-container { position: absolute; top: 15px; right: 20px; z-index: 1001; }
-        .lang-select { background: var(--bg-panel); color: var(--accent-cyan); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; outline: none; }
-        .lang-select:focus { border-color: var(--accent-cyan); }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-        /* PAYWALL */
-        .paywall-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--bg-main); z-index: 1000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; }
-        .paywall-card { background: var(--bg-panel); padding: 30px; border-radius: 20px; border: 1px solid var(--border-color); max-width: 520px; width: 100%; text-align: center; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin: auto; position: relative; }
-        .paywall-card h1 { color: var(--accent-cyan); font-size: 1.8rem; margin-bottom: 8px; margin-top: 10px; }
-        .paywall-card p.desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
-        
-        .price-box { background: var(--bg-main); border: 1px solid var(--accent-cyan); border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: left; }
-        .price-box h3 { color: var(--accent-green); font-size: 1.2rem; margin-bottom: 10px; text-align: center; }
-        .price-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
-        .price-item:last-child { border-bottom: none; }
-        .price-item span.amount { font-weight: bold; color: var(--accent-cyan); }
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
 
-        /* QR PLATBA SEKCIA */
-        .payment-qr-box { background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: center; }
-        .payment-qr-box h4 { color: var(--accent-cyan); font-size: 1rem; margin-bottom: 8px; }
-        .payment-qr-box p.iban { font-family: monospace; font-weight: bold; font-size: 0.95rem; color: #fff; margin: 6px 0; background: #0004; padding: 6px; border-radius: 6px; }
-        .qr-img { width: 160px; height: 160px; margin: 10px auto; border-radius: 8px; border: 2px solid #fff; display: block; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-        .btn-pay { background: var(--accent-cyan); color: #000; padding: 14px; border-radius: 10px; font-weight: 800; cursor: pointer; border: none; width: 100%; margin-top: 10px; font-size: 1rem; transition: 0.2s; }
-        .btn-pay:hover { background: #22d3ee; }
-        .btn-pay:disabled { background: #555; cursor: not-allowed; }
-        .input-box { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: white; outline: none; }
-        .input-box:focus { border-color: var(--accent-cyan); }
-        textarea.input-box { resize: vertical; min-height: 80px; }
+        .lang-select {
+            background: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--input-border);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
 
-        /* SEKCIA PODPORA PRED PLATBOU */
-        .support-box { margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: left; }
-        .support-box h4 { color: var(--accent-purple); font-size: 0.95rem; margin-bottom: 6px; text-align: center; }
-        .support-box p { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 12px; text-align: center; }
-        .btn-support { background: transparent; color: var(--accent-purple); border: 1px solid var(--accent-purple); padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.85rem; transition: 0.2s; margin-top: 6px; }
-        .btn-support:hover { background: var(--accent-purple); color: #fff; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--input-bg);
+            padding: 4px;
+            border-radius: 10px;
+        }
 
-        /* KALKULAČKA */
-        #app-content { display: none; width: 100%; max-width: 1200px; position: relative; }
-        .wrapper { width: 100%; }
-        .tab-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; flex-wrap: wrap; gap: 12px; }
-        .tab-nav { display: flex; gap: 12px; }
-        .tab-btn { background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-muted); padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
-        .tab-btn:hover { color: #fff; border-color: var(--accent-cyan); }
-        .tab-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .row .form-group {
+            flex: 1;
+        }
+
+        .results {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .res-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .res-item.total {
+            border-top: 1px solid var(--card-border);
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .text-green { color: var(--accent-green); }
+        .text-yellow { color: var(--accent-yellow); }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-blue-hover);
+        }
+
+        /* Paywall Modal Styling */
+        .paywall-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .paywall-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .notice-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--accent-yellow);
+            color: var(--accent-yellow);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .dashboard { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 24px; }
-        @media (max-width: 950px) { .dashboard { grid-template-columns: 1fr; } }
-        .panel { background-color: var(--bg-panel); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
-        .section-title { font-size: 0.85rem; text-transform: uppercase; color: var(--accent-cyan); font-weight: 800; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-        .item-tabs-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; background: var(--bg-main); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); }
-        .item-tab-pill { background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .item-tab-pill.active { background: var(--accent-purple); color: #fff; border-color: var(--accent-purple); box-shadow: 0 0 10px rgba(139, 92, 246, 0.4); }
-        .btn-add { background: var(--accent-cyan); color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 0.82rem; transition: 0.2s; box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
-        .btn-add:hover { background: #22d3ee; transform: translateY(-1px); }
-        .btn-remove-pill { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: none; width: 18px; height: 18px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
-        .btn-remove-pill:hover { background: var(--accent-red); color: #000; }
-        .item-card-content { display: none; background: var(--bg-card); border: 1px solid var(--border-color); padding: 18px; border-radius: 12px; margin-bottom: 20px; }
-        .item-card-content.active { display: block; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .group { margin-bottom: 12px; }
-        label { display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-main); font-size: 0.9rem; outline: none; }
-        input:focus, select:focus { border-color: var(--accent-cyan); box-shadow: 0 0 8px rgba(6, 182, 212, 0.3); }
-        .currency-input { display: flex; gap: 6px; }
-        .currency-input select { width: 95px; }
-        .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
-        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-main); background: var(--bg-main); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .checkbox-item input { width: auto; }
-        .results-panel { background: linear-gradient(180deg, var(--bg-panel) 0%, #0d131f 100%); border: 1px solid var(--accent-cyan); }
-        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-        .metric-card { background-color: var(--bg-main); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
-        .metric-card .title { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-        .metric-card .value { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
-        .breakdown { font-size: 0.85rem; }
-        .b-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); color: var(--text-muted); }
-        .b-row:last-child { border-bottom: none; }
-        .green { color: var(--accent-green) !important; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
-        .red { color: var(--accent-red) !important; }
-        .purple { color: var(--accent-purple) !important; }
-        .status-pill { display: inline-block; padding: 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 800; margin-top: 14px; width: 100%; text-align: center; letter-spacing: 0.5px; }
-        .bg-green { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .bg-red { background-color: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
-        .risk-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); padding: 12px; border-radius: 10px; margin-top: 12px; font-size: 0.78rem; color: var(--accent-red); display: none; line-height: 1.4; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
 
-        /* NÁVRHY NA ZLEPŠENIE NA SPODKU */
-        .app-footer-feedback { margin-top: 40px; padding: 20px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; text-align: center; max-width: 600px; margin-left: auto; margin-right: auto; }
-        .app-footer-feedback h5 { color: var(--accent-cyan); font-size: 0.9rem; margin-bottom: 6px; }
-        .app-footer-feedback p { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 10px; }
-        .app-footer-feedback input, .app-footer-feedback textarea { font-size: 0.8rem; padding: 8px; margin-bottom: 6px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-<!-- OVERENIE PRÍSTUPU / LANDING PAGE -->
-<div id="landing-page" class="paywall-wrapper">
-    <div class="paywall-card">
-        <div class="lang-selector-container">
-            <select class="lang-select" onchange="changeLanguage(this.value)">
-                <option value="en" selected>🇬🇧 EN</option>
-                <option value="sk">🇸🇰 SK</option>
-                <option value="cz">🇨🇿 CZ</option>
-                <option value="pl">🇵🇱 PL</option>
-                <option value="hu">🇭🇺 HU</option>
-                <option value="de">🇩🇪 DE</option>
+    <!-- PAYWALL / ACTIVATION OVERLAY -->
+    <div id="paywall" class="paywall-overlay" style="display: flex;">
+        <div class="paywall-card">
+            <h2 id="pw-title" style="margin-bottom: 10px;">Aktivácia Kalkulačky</h2>
+            <p id="pw-desc" style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">
+                Pre prístup k nástroju zadaním váš aktivovaný kód.
+            </p>
+
+            <div class="notice-box" id="pw-notice">
+                ⚠️ <strong>Dôležité:</strong> Pri platbe cez QR kód alebo prevod nezabudnite do poznámky pre príjemcu napísať váš e-mail, na ktorý vám pošleme kód!
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="accessCodeInput" placeholder="Zadajte prístupový kód">
+            </div>
+            <button class="btn-action" onclick="verifyCode()" id="pw-btn">Aktivovať prístup</button>
+            <p id="pw-error" style="color: #ef4444; font-size: 12px; margin-top: 10px; display: none;"></p>
+        </div>
+    </div>
+
+    <!-- MAIN CALCULATOR APP -->
+    <div class="container">
+        <div class="header">
+            <h3>Resell Calculator</h3>
+            <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+                <option value="sk">Slovenčina 🇸🇰</option>
+                <option value="cz">Čeština 🇨🇿</option>
+                <option value="en">English 🇬🇧</option>
+                <option value="de">Deutsch 🇩🇪</option>
+                <option value="pl">Polski 🇵🇱</option>
+                <option value="hu">Magyar 🇭🇺</option>
             </select>
         </div>
 
-        <h1>Resell Calculator PRO</h1>
-        <p class="desc" data-i18n="p_desc">Unlock access to the ultimate tool for calculating haul profits and Vinted flips.</p>
-
-        <div class="price-box">
-            <h3 data-i18n="p_pricing">PRICING TIERS</h3>
-            <div class="price-item">
-                <span data-i18n="p_lifetime">Lifetime Access</span>
-                <span class="amount">4.99 €</span>
-            </div>
-            <div class="price-item">
-                <span data-i18n="p_vip">VIP Bundle (Access + Discord Community)</span>
-                <span class="amount">9.99 €</span>
-            </div>
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-cn-btn" onclick="switchTab('china')">China Haul</button>
+            <button class="tab-btn" id="tab-vt-btn" onclick="switchTab('vinted')">Vinted / Local</button>
+            <button class="tab-btn" id="tab-fb-btn" onclick="switchTab('feedback')">Podpora</button>
         </div>
 
-        <!-- QR PLATBA -->
-        <div class="payment-qr-box">
-            <h4 data-i18n="p_qr_head">Bank Transfer / QR Code Payment</h4>
-            <p style="font-size:0.75rem; color:var(--text-muted);" data-i18n="p_qr_sub">After payment, your activation code will be sent to your email or message.</p>
-            <p class="iban">SK55 1100 0000 0029 7011 1093</p>
-            <p style="font-size:0.75rem; color:var(--text-muted);"><span data-i18n="p_recipient">Recipient Name</span>: <b>Patrik Šuľaj</b></p>
-            <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=SPD*1.0*ACC:SK5511000000002970111093*AM:4.99*CC:EUR*MSG:ResellCalculatorPRO" alt="Payment QR Code">
-        </div>
-
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;" data-i18n="p_already_code">Already have a code? Enter your email and activation code.</p>
-
-        <input type="email" id="email" class="input-box" placeholder="Your Email" data-i18n-ph="ph_email">
-        <input type="text" id="activation-code" class="input-box" placeholder="Enter Activation Code" data-i18n-ph="ph_code">
-        
-        <button class="btn-pay" onclick="checkAccess()" data-i18n="btn_unlock">UNLOCK CALCULATOR</button>
-
-        <!-- SEKCIA PODPORA -->
-        <div class="support-box">
-            <h4 data-i18n="p_supp_head">Having trouble paying?</h4>
-            <p data-i18n="p_supp_sub">Issue with payment or haven't received your code? Send us a message and we will solve it instantly.</p>
-            <input type="email" id="support-email" class="input-box" placeholder="Your Email" data-i18n-ph="ph_email">
-            <textarea id="support-note" class="input-box" placeholder="Describe your payment issue..." data-i18n-ph="ph_supp_note"></textarea>
-            <button class="btn-support" onclick="sendSupportMessage()" data-i18n="btn_send_msg">SEND MESSAGE</button>
-        </div>
-    </div>
-</div>
-
-<!-- KALKULAČKA -->
-<div id="app-content">
-    <div class="wrapper">
-        <div class="tab-nav-bar">
-            <div class="tab-nav">
-                <button class="tab-btn active" onclick="switchMainTab('chinaTab', this)" data-i18n="tab_china">1. China / Multi-Item Import</button>
-                <button class="tab-btn" onclick="switchMainTab('vintedTab', this)" data-i18n="tab_vinted">2. Vinted / Local Flip</button>
-            </div>
-            <div>
-                <select class="lang-select" onchange="changeLanguage(this.value)">
-                    <option value="en" selected>🇬🇧 EN</option>
-                    <option value="sk">🇸🇰 SK</option>
-                    <option value="cz">🇨🇿 CZ</option>
-                    <option value="pl">🇵🇱 PL</option>
-                    <option value="hu">🇭🇺 HU</option>
-                    <option value="de">🇩🇪 DE</option>
+        <!-- CHINA HAUL SECTION -->
+        <div id="tab-china" class="tab-content active">
+            <div class="form-group">
+                <label id="lbl-item">Typ predmetu</label>
+                <select id="cn-item" onchange="updateItemData()">
+                    <option value="custom">Vlastný predmet (Zadať ručne)</option>
+                    <option value="shoes">Topánky / Tenisky (~1200g)</option>
+                    <option value="hoodie">Mikina (~800g)</option>
+                    <option value="tshirt">Tričko (~250g)</option>
+                    <option value="pants">Nohavice / Tepláky (~600g)</option>
+                    <option value="jacket">Bunda (~1100g)</option>
+                    <option value="cap">Šiltovka / Čiapka (~150g)</option>
+                    <option value="socks">Ponožky / Doplnky (~80g)</option>
                 </select>
             </div>
-        </div>
 
-        <!-- TAB 1: CHINA -->
-        <div id="chinaTab" class="tab-content active">
-            <div class="dashboard">
-                <div class="panel">
-                    <div class="section-title">
-                        <span data-i18n="c_sec1">1. Haul Items</span>
-                        <button class="btn-add" onclick="addNewItem()" data-i18n="btn_add_item">+ New Item</button>
-                    </div>
-
-                    <div class="item-tabs-bar" id="itemTabsBar"></div>
-                    <div id="itemContentsContainer"></div>
-
-                    <div class="section-title" data-i18n="c_sec2">2. Agent & Parcel Logistics</div>
-                    <div class="grid-2">
-                        <div class="group">
-                            <label data-i18n="lbl_agent">Agent Platform</label>
-                            <select id="c1_agent" onchange="calcChina()">
-                                <option value="litbuy">LitBuy (3.5% TopUp)</option>
-                                <option value="opbuy">OPBuy (3.0% TopUp)</option>
-                                <option value="acbuy">ACBuy (4.0% TopUp)</option>
-                            </select>
-                        </div>
-                        <div class="group">
-                            <label data-i18n="lbl_country">Destination Country</label>
-                            <select id="c1_country" onchange="calcChina()">
-                                <option value="SK">Slovakia (€13.8/kg)</option>
-                                <option value="CZ">Czechia (€13.5/kg)</option>
-                                <option value="DE">Germany (€12.9/kg)</option>
-                                <option value="PL">Poland (€13.0/kg)</option>
-                                <option value="HU">Hungary (€14.1/kg)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="checkbox-grid">
-                        <div class="checkbox-item"><input type="checkbox" id="c1_cornerProtect" onchange="calcChina()"><label for="c1_cornerProtect" data-i18n="opt_corners">+ Corner Protection (+1.5€)</label></div>
-                        <div class="checkbox-item"><input type="checkbox" id="c1_bubbleWrap" onchange="calcChina()"><label for="c1_bubbleWrap" data-i18n="opt_bubble">+ Bubble Wrap (+2€)</label></div>
-                        <div class="checkbox-item"><input type="checkbox" id="c1_moistureBag" onchange="calcChina()"><label for="c1_moistureBag" data-i18n="opt_moisture">+ Moisture Bag (+1€)</label></div>
-                        <div class="checkbox-item"><input type="checkbox" id="c1_insurance" checked onchange="calcChina()"><label for="c1_insurance" data-i18n="opt_insurance">+ Insurance (3%)</label></div>
-                    </div>
-
-                    <div class="section-title" data-i18n="c_sec3">3. Sales Platform</div>
-                    <div class="group">
-                        <label data-i18n="lbl_sell_platform">Where will you sell these items?</label>
-                        <select id="c1_platform" onchange="calcChina()">
-                            <option value="vinted">Vinted / In Person (0%)</option>
-                            <option value="shopify">Shopify Store (2.9% + 0.30€)</option>
-                            <option value="ebay">eBay (12.8% + 0.35€)</option>
-                            <option value="stockx">StockX (12%)</option>
-                        </select>
-                    </div>
+            <div class="row">
+                <div class="form-group">
+                    <label id="lbl-cn-price">Cena v Číne (¥ CNY)</label>
+                    <input type="number" id="cn-price" placeholder="150" oninput="calcChina()">
                 </div>
-
-                <div class="panel results-panel">
-                    <div class="section-title" data-i18n="res_c_title">Total Haul Overview</div>
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="title" data-i18n="res_net_profit">Net Profit</div>
-                            <div id="c1_netProfit" class="value green">0.00 €</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="title" data-i18n="res_roi">Total ROI</div>
-                            <div id="c1_roi" class="value purple">0%</div>
-                        </div>
-                    </div>
-
-                    <div class="breakdown">
-                        <div class="b-row"><span data-i18n="res_item_cost">Total Product Cost:</span><span id="c1_resProductEur">0.00 €</span></div>
-                        <div class="b-row"><span data-i18n="res_weight">Final Parcel Weight:</span><span id="c1_resChargedWeight">0 g</span></div>
-                        <div class="b-row"><span data-i18n="res_shipping">Shipping Cost:</span><span id="c1_resChinaShip">0.00 €</span></div>
-                        <div class="b-row"><span data-i18n="res_fees">TopUp & Packaging Fees:</span><span id="c1_resPackFees">0.00 €</span></div>
-                        <div class="b-row" style="font-weight: bold; margin-top: 6px; color: #fff;"><span data-i18n="res_total_cost">Total Sourcing Cost:</span><span id="c1_resTotalCost">0.00 €</span></div>
-                        <div class="b-row green" style="font-weight: bold;"><span data-i18n="res_planned_rev">Planned Revenue:</span><span id="c1_resTotalSell">0.00 €</span></div>
-                        <div class="b-row purple" style="font-weight: bold; margin-top: 4px;"><span data-i18n="res_breakeven">Min. Selling Price (Break-Even):</span><span id="c1_resBreakEven">0.00 €</span></div>
-                    </div>
-
-                    <div id="c1_status" class="status-pill bg-green">PROFITABLE HAUL</div>
-                    <div id="c1_riskBox" class="risk-box" data-i18n="risk_msg">⚠️ WARNING: Parcel exceeds 10kg or contains high-risk items (perfumes/batteries/luxury)! Higher risk of customs inspection or line restrictions.</div>
+                <div class="form-group">
+                    <label id="lbl-cn-weight">Váha (g)</label>
+                    <input type="number" id="cn-weight" placeholder="800" oninput="calcChina()">
                 </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label id="lbl-cn-shiprate">Poštovné (€ / kg)</label>
+                    <input type="number" id="cn-shiprate" value="12" oninput="calcChina()">
+                </div>
+                <div class="form-group">
+                    <label id="lbl-cn-sell">Predajná cena (€)</label>
+                    <input type="number" id="cn-sell" placeholder="60" oninput="calcChina()">
+                </div>
+            </div>
+
+            <div class="results">
+                <div class="res-item"><span id="lbl-res-itemprice">Cena produktu:</span> <span id="res-cn-itemprice">0.00 €</span></div>
+                <div class="res-item"><span id="lbl-res-shipprice">Odhadované poštovné:</span> <span id="res-cn-shipprice">0.00 €</span></div>
+                <div class="res-item"><span id="lbl-res-totalcost">Celkové náklady:</span> <span id="res-cn-totalcost">0.00 €</span></div>
+                <div class="res-item total"><span id="lbl-res-profit">Čistý zisk:</span> <span id="res-cn-profit" class="text-green">0.00 €</span></div>
             </div>
         </div>
 
-        <!-- TAB 2: VINTED -->
-        <div id="vintedTab" class="tab-content">
-            <div class="dashboard">
-                <div class="panel">
-                    <div class="section-title" data-i18n="v_title">Vinted / Local Flip</div>
-                    <div class="grid-2">
-                        <div class="group"><label data-i18n="v_buy_price">Purchase Price (€)</label><input type="number" id="v_buyPrice" value="45" oninput="calcVinted()"></div>
-                        <div class="group"><label data-i18n="v_shipping">Shipping + Fees (€)</label><input type="number" id="v_buyFees" value="4.20" oninput="calcVinted()"></div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="group"><label data-i18n="v_renovation">Cleaning / Repairs (€)</label><input type="number" id="v_renovation" value="3.00" oninput="calcVinted()"></div>
-                        <div class="group"><label data-i18n="v_sell_price">Selling Price (€)</label><input type="number" id="v_sellPrice" value="95" oninput="calcVinted()"></div>
-                    </div>
-                    <div class="group">
-                        <label data-i18n="lbl_sell_platform">Sales Platform</label>
-                        <select id="v_sellPlatform" onchange="calcVinted()">
-                            <option value="vinted">Vinted / In Person (0%)</option>
-                            <option value="shopify">Shopify (2.9% + 0.30€)</option>
-                            <option value="ebay">eBay (12.8% + 0.35€)</option>
-                        </select>
-                    </div>
+        <!-- VINTED / LOCAL SECTION -->
+        <div id="tab-vinted" class="tab-content">
+            <div class="row">
+                <div class="form-group">
+                    <label id="lbl-vt-buy">Nákupná cena (€)</label>
+                    <input type="number" id="vt-buy" placeholder="20" oninput="calcVinted()">
                 </div>
+                <div class="form-group">
+                    <label id="lbl-vt-ship">Moje poštovné/balné (€)</label>
+                    <input type="number" id="vt-ship" value="0" oninput="calcVinted()">
+                </div>
+            </div>
 
-                <div class="panel results-panel">
-                    <div class="section-title" data-i18n="v_res_title">Local Flip Results</div>
-                    <div class="metrics-grid">
-                        <div class="metric-card"><div class="title" data-i18n="res_net_profit">Net Profit</div><div id="v_netProfit" class="value green">0.00 €</div></div>
-                        <div class="metric-card"><div class="title" data-i18n="res_roi">ROI</div><div id="v_roi" class="value purple">0%</div></div>
-                    </div>
-                    <div class="breakdown">
-                        <div class="b-row"><span data-i18n="v_res_total_cost">Total Cost:</span><span id="v_resTotalBuy">0.00 €</span></div>
-                        <div class="b-row"><span data-i18n="v_res_sell_fee">Selling Fee:</span><span id="v_resSellFee">0.00 €</span></div>
-                        <div class="b-row" style="font-weight: bold; color: #fff;"><span data-i18n="v_res_net_yield">Net Revenue:</span><span id="v_resNetYield">0.00 €</span></div>
-                    </div>
-                    <div id="v_status" class="status-pill bg-green">GREAT LOKAL FLIP</div>
+            <div class="row">
+                <div class="form-group">
+                    <label id="lbl-vt-sell">Predajná cena (€)</label>
+                    <input type="number" id="vt-sell" placeholder="45" oninput="calcVinted()">
                 </div>
+                <div class="form-group">
+                    <label id="lbl-vt-fee">Poplatok platformy (%)</label>
+                    <input type="number" id="vt-fee" value="0" oninput="calcVinted()">
+                </div>
+            </div>
+
+            <div class="results">
+                <div class="res-item"><span id="lbl-res-vt-costs">Celkové výdavky:</span> <span id="res-vt-costs">0.00 €</span></div>
+                <div class="res-item"><span id="lbl-res-vt-feeval">Poplatok z predaja:</span> <span id="res-vt-feeval">0.00 €</span></div>
+                <div class="res-item total"><span id="lbl-res-vt-profit">Čistý zisk:</span> <span id="res-vt-profit" class="text-green">0.00 €</span></div>
             </div>
         </div>
 
-        <!-- FOOTER FEEDBACK -->
-        <div class="app-footer-feedback">
-            <h5 data-i18n="fb_head">Have an idea or feature suggestion?</h5>
-            <p data-i18n="fb_sub">Let us know what you would like to see next and we will implement it.</p>
-            <input type="email" id="feedback-email" class="input-box" placeholder="Your Email (optional)" data-i18n-ph="ph_email_opt">
-            <textarea id="feedback-note" class="input-box" placeholder="Your idea / suggestion..." data-i18n-ph="ph_fb_note"></textarea>
-            <button class="btn-support" onclick="sendFeedbackMessage()" data-i18n="btn_send_idea">SUBMIT IDEA</button>
+        <!-- FEEDBACK / SUPPORT SECTION -->
+        <div id="tab-feedback" class="tab-content">
+            <div class="form-group">
+                <label id="lbl-fb-email">Váš E-mail (voliteľné)</label>
+                <input type="email" id="fb-email" placeholder="vás@email.com">
+            </div>
+            <div class="form-group">
+                <label id="lbl-fb-msg">Návrh na zlepšenie / Správa</label>
+                <input type="text" id="fb-msg" placeholder="Čo by sme mali pridať?">
+            </div>
+            <button class="btn-action" id="btn-fb-send" onclick="sendFeedback()">Odoslať správu</button>
+            <p id="fb-status" style="font-size: 12px; margin-top: 10px; text-align: center; color: var(--accent-green); display: none;"></p>
         </div>
+
     </div>
-</div>
 
-<script>
-    // PREKLADY / DICTIONARY
-    const translations = {
-        en: {
-            p_desc: "Unlock access to the ultimate tool for calculating haul profits and Vinted flips.",
-            p_pricing: "PRICING TIERS",
-            p_lifetime: "Lifetime Access",
-            p_vip: "VIP Bundle (Access + Discord)",
-            p_qr_head: "Bank Transfer / QR Code Payment",
-            p_qr_sub: "After payment, your activation code will be sent to your email or message.",
-            p_recipient: "Recipient Name",
-            p_already_code: "Already have a code? Enter your email and activation code.",
-            ph_email: "Your Email",
-            ph_code: "Enter Activation Code",
-            btn_unlock: "UNLOCK CALCULATOR",
-            p_supp_head: "Having trouble paying?",
-            p_supp_sub: "Issue with payment or haven't received your code? Send us a message and we will solve it instantly.",
-            ph_supp_note: "Describe your payment issue...",
-            btn_send_msg: "SEND MESSAGE",
-            tab_china: "1. China / Multi-Item Import",
-            tab_vinted: "2. Vinted / Local Flip",
-            c_sec1: "1. Haul Items",
-            btn_add_item: "+ New Item",
-            c_sec2: "2. Agent & Parcel Logistics",
-            lbl_agent: "Agent Platform",
-            lbl_country: "Destination Country",
-            opt_corners: "+ Corner Protection (+1.5€)",
-            opt_bubble: "+ Bubble Wrap (+2€)",
-            opt_moisture: "+ Moisture Bag (+1€)",
-            opt_insurance: "+ Insurance (3%)",
-            c_sec3: "3. Sales Platform",
-            lbl_sell_platform: "Where will you sell these items?",
-            res_c_title: "Total Haul Overview",
-            res_net_profit: "Net Profit",
-            res_roi: "Total ROI",
-            res_item_cost: "Total Product Cost:",
-            res_weight: "Final Parcel Weight:",
-            res_shipping: "Shipping Cost:",
-            res_fees: "TopUp & Packaging Fees:",
-            res_total_cost: "Total Sourcing Cost:",
-            res_planned_rev: "Planned Revenue:",
-            res_breakeven: "Min. Selling Price (Break-Even):",
-            risk_msg: "⚠️ WARNING: Parcel exceeds 10kg or contains high-risk items (perfumes/batteries/luxury)! Higher risk of customs inspection or line restrictions.",
-            v_title: "Vinted / Local Flip",
-            v_buy_price: "Purchase Price (€)",
-            v_shipping: "Shipping + Fees (€)",
-            v_renovation: "Cleaning / Repairs (€)",
-            v_sell_price: "Selling Price (€)",
-            v_res_title: "Local Flip Results",
-            v_res_total_cost: "Total Cost:",
-            v_res_sell_fee: "Selling Fee:",
-            v_res_net_yield: "Net Revenue:",
-            fb_head: "Have an idea or feature suggestion?",
-            fb_sub: "Let us know what you would like to see next and we will implement it.",
-            ph_email_opt: "Your Email (optional)",
-            ph_fb_note: "Your idea / suggestion...",
-            btn_send_idea: "SUBMIT IDEA",
-            item_default_name: "Item",
-            lbl_item_name: "Item Name",
-            lbl_category: "Item Category",
-            cat_clothing: "Clothing / Regular Item",
-            cat_perfume: "Perfume / Liquids (+35%)",
-            cat_battery: "Electronics (+20%)",
-            cat_luxury: "Luxury / Branded (+15%)",
-            lbl_buy_price: "Purchase Price",
-            lbl_weight: "Net Weight (Grams)",
-            lbl_target_price: "Target Selling Price (€)",
-            lbl_box: "Include Shoe Box (+350g)",
-            status_top: "TOP TIER HAUL",
-            status_profit: "PROFITABLE HAUL",
-            status_loss: "UNPROFITABLE HAUL",
-            status_v_profit: "GREAT LOCAL FLIP",
-            status_v_loss: "UNPROFITABLE FLIP"
-        },
-        sk: {
-            p_desc: "Aktivuj si prístup k nástroju na výpočet zisku z haulov a Vinted flipov.",
-            p_pricing: "CENNÍK PRÍSTUPOV",
-            p_lifetime: "Doživotný prístup (LIFETIME)",
-            p_vip: "VIP Balík (Prístup + Discord Komunita)",
-            p_qr_head: "Platba prevodom / QR kódom",
-            p_qr_sub: "Po zaplatení ti príde aktivačný kód na e-mail / do správy.",
-            p_recipient: "Meno príjemcu",
-            p_already_code: "Máš už kód? Zadaj svoj e-mail a aktivačný kód.",
-            ph_email: "Tvoj E-mail",
-            ph_code: "Zadaj aktivačný kód",
-            btn_unlock: "ODOMKNÚŤ KALKULAČKU",
-            p_supp_head: "Nedarí sa vám zaplatiť?",
-            p_supp_sub: "Máte problém s platbou alebo nedostali ste kód? Napíšte nám a hneď to vyriešime.",
-            ph_supp_note: "Popíš svoj problém s platbou...",
-            btn_send_msg: "ODOSLAŤ SPRÁVU",
-            tab_china: "1. Čína / Multi-Item Import",
-            tab_vinted: "2. Vinted / Local Flip",
-            c_sec1: "1. Predmety v Haule",
-            btn_add_item: "+ Nový Predmet",
-            c_sec2: "2. Agent & Logistika Balíka",
-            lbl_agent: "Agent Platforma",
-            lbl_country: "Cieľová Krajina (Doručenie)",
-            opt_corners: "+ Kartónové rohy (+1.5€)",
-            opt_bubble: "+ Bublinková fólia (+2€)",
-            opt_moisture: "+ Vodotesný obal (+1€)",
-            opt_insurance: "+ Poistenie balíka (3% z ceny)",
-            c_sec3: "3. Predajná Platforma",
-            lbl_sell_platform: "Kde budeš veci predávať?",
-            res_c_title: "Celkový Prehľad Haulu",
-            res_net_profit: "Čistý Zisk",
-            res_roi: "Celkový ROI",
-            res_item_cost: "Cena tovaru celkovo:",
-            res_weight: "Finálna váha balíka:",
-            res_shipping: "Spoločné Poštovné:",
-            res_fees: "Poplatky & Balenie:",
-            res_total_cost: "Celkové Náklady (Nákup):",
-            res_planned_rev: "Plánovaná Tržba (Predaj):",
-            res_breakeven: "Min. Predajná Cena (Break-Even):",
-            risk_msg: "⚠️ VAROVANIE: Balík presahuje 10kg alebo kombinuje rizikový tovar (parfém/batérie/luxus)! Hrozí vyššia šanca colnej kontroly.",
-            v_title: "Vinted / Lokálny Flip",
-            v_buy_price: "Nákupná cena (€)",
-            v_shipping: "Pošta + Poplatky (€)",
-            v_renovation: "Oprava / Čistenie (€)",
-            v_sell_price: "Predajná cena (€)",
-            v_res_title: "Výsledok Lokálneho Flipu",
-            v_res_total_cost: "Celkové Náklady:",
-            v_res_sell_fee: "Poplatok za predaj:",
-            v_res_net_yield: "Čistý Výnos:",
-            fb_head: "Máš nápad na zlepšenie alebo novú funkciu?",
-            fb_sub: "Napíš nám, čo by si v kalkulačke rád uvidel a zapracujeme to.",
-            ph_email_opt: "Tvoj E-mail (voliteľné)",
-            ph_fb_note: "Tvoj nápad / pripomienka...",
-            btn_send_idea: "ODOSLAŤ NÁPAD",
-            item_default_name: "Predmet",
-            lbl_item_name: "Názov",
-            lbl_category: "Typ Tovaru",
-            cat_clothing: "Oblečenie / Bežný tovar",
-            cat_perfume: "Parfém / Tekutiny (+35%)",
-            cat_battery: "Elektronika (+20%)",
-            cat_luxury: "Luxus / Značka (+15%)",
-            lbl_buy_price: "Nákupná Cena",
-            lbl_weight: "Čistá Váha (Gramy)",
-            lbl_target_price: "Predajná Cena (€)",
-            lbl_box: "S krabicou (+350g)",
-            status_top: "ŠPIČKOVÝ HAUL",
-            status_profit: "ZISKOVÝ HAUL",
-            status_loss: "STRATOVÝ HAUL",
-            status_v_profit: "SUPER LOKÁLNY FLIP",
-            status_v_loss: "STRATOVÝ FLIP"
-        },
-        cz: {
-            p_desc: "Odemkni přístup k nástroji pro výpočet zisku z haulů a Vinted flipů.",
-            p_pricing: "CENÍK PŘÍSTUPŮ",
-            p_lifetime: "Doživotní přístup (LIFETIME)",
-            p_vip: "VIP Balíček (Přístup + Discord)",
-            p_qr_head: "Platba převodem / QR kódem",
-            p_qr_sub: "Po zaplacení obdržíš aktivační kód na e-mail nebo v zprávě.",
-            p_recipient: "Jméno příjemce",
-            p_already_code: "Máš už kód? Zadej svůj e-mail a aktivační kód.",
-            ph_email: "Tvůj E-mail",
-            ph_code: "Zadej aktivační kód",
-            btn_unlock: "ODEMKNOUT KALKULAČKU",
-            p_supp_head: "Nedaří se vám zaplatit?",
-            p_supp_sub: "Máte problém s platbou nebo jste neobdrželi kód? Napište nám a hned to vyřešíme.",
-            ph_supp_note: "Popiš svůj problém s platbou...",
-            btn_send_msg: "ODESLAT ZPRÁVU",
-            tab_china: "1. Čína / Multi-Item Import",
-            tab_vinted: "2. Vinted / Local Flip",
-            c_sec1: "1. Předměty v Haulu",
-            btn_add_item: "+ Nový Předmět",
-            c_sec2: "2. Agent & Logistika Balíku",
-            lbl_agent: "Agent Platforma",
-            lbl_country: "Cílová Země (Doručení)",
-            opt_corners: "+ Kartonové rohy (+1.5€)",
-            opt_bubble: "+ Bublinková fólie (+2€)",
-            opt_moisture: "+ Voděodolný obal (+1€)",
-            opt_insurance: "+ Pojištění balíku (3%)",
-            c_sec3: "3. Prodejní Platforma",
-            lbl_sell_platform: "Kde budeš věci prodávat?",
-            res_c_title: "Celkový Přehled Haulu",
-            res_net_profit: "Čistý Zisk",
-            res_roi: "Celkový ROI",
-            res_item_cost: "Cena zboží celkově:",
-            res_weight: "Finální váha balíku:",
-            res_shipping: "Společné Poštovné:",
-            res_fees: "Poplatky & Balení:",
-            res_total_cost: "Celkové Náklady (Nákup):",
-            res_planned_rev: "Plánovaná Tržba (Prodej):",
-            res_breakeven: "Min. Prodejní Cena (Break-Even):",
-            risk_msg: "⚠️ VAROVÁNÍ: Balík přesahuje 10kg nebo kombinuje rizikové zboží (parfém/baterie/luxus)! Hrozí vyšší šance celní kontroly.",
-            v_title: "Vinted / Lokální Flip",
-            v_buy_price: "Nákupní cena (€)",
-            v_shipping: "Pošta + Poplatky (€)",
-            v_renovation: "Oprava / Čištění (€)",
-            v_sell_price: "Prodejní cena (€)",
-            v_res_title: "Výsledek Lokálního Flipu",
-            v_res_total_cost: "Celkové Náklady:",
-            v_res_sell_fee: "Poplatek za prodej:",
-            v_res_net_yield: "Čistý Výnos:",
-            fb_head: "Máš nápad na zlepšení nebo novou funkci?",
-            fb_sub: "Napiš nám, co bys v kalkulačce rád viděl a zapracujeme to.",
-            ph_email_opt: "Tvůj E-mail (volitelné)",
-            ph_fb_note: "Tvůj nápad / připomínka...",
-            btn_send_idea: "ODESLAT NÁPAD",
-            item_default_name: "Předmět",
-            lbl_item_name: "Název",
-            lbl_category: "Typ Zboží",
-            cat_clothing: "Oblečení / Běžné zboží",
-            cat_perfume: "Parfém / Tekutiny (+35%)",
-            cat_battery: "Elektronika (+20%)",
-            cat_luxury: "Luxus / Značka (+15%)",
-            lbl_buy_price: "Nákupní Cena",
-            lbl_weight: "Čistá Váha (Gramy)",
-            lbl_target_price: "Prodejní Cena (€)",
-            lbl_box: "S krabicí (+350g)",
-            status_top: "ŠPIČKOVÝ HAUL",
-            status_profit: "ZISKOVÝ HAUL",
-            status_loss: "ZTRÁTOVÝ HAUL",
-            status_v_profit: "SUPER LOKÁLNÍ FLIP",
-            status_v_loss: "ZTRÁTOVÝ FLIP"
-        },
-        pl: {
-            p_desc: "Odblokuj dostęp do kalkulatora zysków z haulów i flipów na Vinted.",
-            p_pricing: "CENNIK DOSTĘPU",
-            p_lifetime: "Dostęp Dożywotni (LIFETIME)",
-            p_vip: "Pakiet VIP (Dostęp + Discord)",
-            p_qr_head: "Płatność Przelewem / Kodem QR",
-            p_qr_sub: "Po opłaceniu kod aktywacyjny zostanie wysłany na Twój e-mail.",
-            p_recipient: "Odbiorca",
-            p_already_code: "Masz już kod? Wpisz e-mail i kod aktywacyjny.",
-            ph_email: "Twój E-mail",
-            ph_code: "Wpisz kod aktywacyjny",
-            btn_unlock: "ODBLOKUJ KALKULATOR",
-            p_supp_head: "Masz problem z płatnością?",
-            p_supp_sub: "Napisz do nas, a natychmiast pomożemy rozwiązać problem.",
-            ph_supp_note: "Opisz swój problem z płatnością...",
-            btn_send_msg: "WYŚLIJ WIADOMOŚĆ",
-            tab_china: "1. Chiny / Import Wielu Przedmiotów",
-            tab_vinted: "2. Vinted / Flip Lokalny",
-            c_sec1: "1. Przedmioty w Haulu",
-            btn_add_item: "+ Nowy Przedmiot",
-            c_sec2: "2. Agent i Logistyka",
-            lbl_agent: "Platforma Agenta",
-            lbl_country: "Kraj Docelowy",
-            opt_corners: "+ Ochrona rogów (+1.5€)",
-            opt_bubble: "+ Folia bąbelkowa (+2€)",
-            opt_moisture: "+ Torba wodoodporna (+1€)",
-            opt_insurance: "+ Ubezpieczenie (3%)",
-            c_sec3: "3. Platforma Sprzedaży",
-            lbl_sell_platform: "Gdzie będziesz sprzedawać?",
-            res_c_title: "Podsumowanie Haulu",
-            res_net_profit: "Zysk Netto",
-            res_roi: "Całkowity ROI",
-            res_item_cost: "Koszt towaru:",
-            res_weight: "Waga paczki:",
-            res_shipping: "Koszt wysyłki:",
-            res_fees: "Opłaty i Pakowanie:",
-            res_total_cost: "Całkowity Koszt Zakupu:",
-            res_planned_rev: "Planowany Przychód:",
-            res_breakeven: "Min. Cena Sprzedaży (Break-Even):",
-            risk_msg: "⚠️ OSTRZEŻENIE: Paczka przekracza 10kg lub zawiera towary ryzykowne (perfumy/baterie)! Wyższe ryzyko kontroli celnej.",
-            v_title: "Vinted / Flip Lokalny",
-            v_buy_price: "Cena zakupu (€)",
-            v_shipping: "Wysyłka + Opłaty (€)",
-            v_renovation: "Czyszczenie / Naprawa (€)",
-            v_sell_price: "Cena sprzedaży (€)",
-            v_res_title: "Wynik Flipa",
-            v_res_total_cost: "Całkowity Koszt:",
-            v_res_sell_fee: "Prowizja od sprzedaży:",
-            v_res_net_yield: "Przychód Netto:",
-            fb_head: "Masz pomysł na ulepszenie?",
-            fb_sub: "Napisz do nas, jaką funkcję chcesz zobaczyć.",
-            ph_email_opt: "Twój E-mail (opcjonalnie)",
-            ph_fb_note: "Twój pomysł...",
-            btn_send_idea: "WYŚLIJ POMYSŁ",
-            item_default_name: "Przedmiot",
-            lbl_item_name: "Nazwa",
-            lbl_category: "Kategoria",
-            cat_clothing: "Odzież / Standard",
-            cat_perfume: "Perfumy / Płyny (+35%)",
-            cat_battery: "Elektronika (+20%)",
-            cat_luxury: "Markowe / Luksus (+15%)",
-            lbl_buy_price: "Cena Zakupu",
-            lbl_weight: "Waga Netto (Gramy)",
-            lbl_target_price: "Cena Sprzedaży (€)",
-            lbl_box: "Z pudełkiem (+350g)",
-            status_top: "SUPER HAUL",
-            status_profit: "HAUL ZYSKOWNY",
-            status_loss: "HAUL STRATNY",
-            status_v_profit: "SUPER FLIP LOKALNY",
-            status_v_loss: "FLIP STRATNY"
-        },
-        hu: {
-            p_desc: "Nyisd meg a hozzáférést a haul és Vinted flip profit kalkulátorhoz.",
-            p_pricing: "ÁRAK",
-            p_lifetime: "Örökké tartó hozzáférés (LIFETIME)",
-            p_vip: "VIP Csomag (Hozzáférés + Discord)",
-            p_qr_head: "Banki Utalás / QR Kód Fizetés",
-            p_qr_sub: "Fizetés után az aktiváló kódot e-mailben küldjük.",
-            p_recipient: "Címzett neve",
-            p_already_code: "Már van kódod? Add meg az e-mail címed és a kódot.",
-            ph_email: "E-mail címed",
-            ph_code: "Aktiváló kód",
-            btn_unlock: "KALKULÁTOR FELOLDÁSA",
-            p_supp_head: "Probléma a fizetéssel?",
-            p_supp_sub: "Írj nekünk és azonnal segítünk.",
-            ph_supp_note: "Írd le a problémát...",
-            btn_send_msg: "ÜZENET KÜLDÉSE",
-            tab_china: "1. Kína / Több Termék Import",
-            tab_vinted: "2. Vinted / Helyi Flip",
-            c_sec1: "1. Termékek a Haulban",
-            btn_add_item: "+ Új Termék",
-            c_sec2: "2. Agent és Logisztika",
-            lbl_agent: "Agent Platform",
-            lbl_country: "Célország",
-            opt_corners: "+ Sarokvédő (+1.5€)",
-            opt_bubble: "+ Buborékfólia (+2€)",
-            opt_moisture: "+ Vízálló csomagolás (+1€)",
-            opt_insurance: "+ Biztosítás (3%)",
-            c_sec3: "3. Eladási Platform",
-            lbl_sell_platform: "Hol fogod eladni?",
-            res_c_title: "Haul Összesítő",
-            res_net_profit: "Nettó Profit",
-            res_roi: "Teljes ROI",
-            res_item_cost: "Termékek ára:",
-            res_weight: "Csomag súlya:",
-            res_shipping: "Szállítási költség:",
-            res_fees: "Díjak és Csomagolás:",
-            res_total_cost: "Teljes Bekerülési Költség:",
-            res_planned_rev: "Tervezett Bevétel:",
-            res_breakeven: "Min. Eladási Ár (Break-Even):",
-            risk_msg: "⚠️ FIGYELEM: A csomag meghaladja a 10 kg-ot vagy kockázatos terméket tartalmaz! Magasabb vámellenőrzési kockázat.",
-            v_title: "Vinted / Helyi Flip",
-            v_buy_price: "Vételár (€)",
-            v_shipping: "Posta + Díjak (€)",
-            v_renovation: "Javítás / Tisztítás (€)",
-            v_sell_price: "Eladási ár (€)",
-            v_res_title: "Flip Eredmény",
-            v_res_total_cost: "Teljes Költség:",
-            v_res_sell_fee: "Eladási jutalék:",
-            v_res_net_yield: "Nettó Bevétel:",
-            fb_head: "Van egy jó ötleted?",
-            fb_sub: "Írd meg nekünk, milyen funkciót látnál szívesen.",
-            ph_email_opt: "E-mail címed (opcionális)",
-            ph_fb_note: "Az ötleted...",
-            btn_send_idea: "ÖTLET KÜLDÉSE",
-            item_default_name: "Termék",
-            lbl_item_name: "Név",
-            lbl_category: "Kategória",
-            cat_clothing: "Ruházat / Normál",
-            cat_perfume: "Parfüm / Folyadék (+35%)",
-            cat_battery: "Elektronika (+20%)",
-            cat_luxury: "Luxus / Márkás (+15%)",
-            lbl_buy_price: "Vételár",
-            lbl_weight: "Nettó Súly (Gramm)",
-            lbl_target_price: "Eladási Ár (€)",
-            lbl_box: "Cipősdobozzal (+350g)",
-            status_top: "TOP HAUL",
-            status_profit: "NYERESÉGES HAUL",
-            status_loss: "VESZTESÉGES HAUL",
-            status_v_profit: "SZUPER HELYI FLIP",
-            status_v_loss: "VESZTESÉGES FLIP"
-        },
-        de: {
-            p_desc: "Schalte den Rechner für Haul-Gewinne und Vinted-Flips frei.",
-            p_pricing: "PREISE",
-            p_lifetime: "Lebenslanger Zugriff (LIFETIME)",
-            p_vip: "VIP-Paket (Zugriff + Discord)",
-            p_qr_head: "Banküberweisung / QR-Code",
-            p_qr_sub: "Nach der Zahlung wird der Aktivierungscode per E-Mail gesendet.",
-            p_recipient: "Empfänger",
-            p_already_code: "Hast du bereits einen Code? Gib deine E-Mail und den Code ein.",
-            ph_email: "Deine E-Mail",
-            ph_code: "Aktivierungscode eingeben",
-            btn_unlock: "RECHNER FREISCHALTEN",
-            p_supp_head: "Probleme bei der Zahlung?",
-            p_supp_sub: "Schreib uns und wir helfen dir sofort weiter.",
-            ph_supp_note: "Beschreibe dein Problem...",
-            btn_send_msg: "NACHRICHT SENDEN",
-            tab_china: "1. China / Multi-Item Import",
-            tab_vinted: "2. Vinted / Lokaler Flip",
-            c_sec1: "1. Artikel im Haul",
-            btn_add_item: "+ Neuer Artikel",
-            c_sec2: "2. Agent & Logistik",
-            lbl_agent: "Agent-Plattform",
-            lbl_country: "Zielland",
-            opt_corners: "+ Ecken-Schutz (+1.5€)",
-            opt_bubble: "+ Luftpolsterfolie (+2€)",
-            opt_moisture: "+ Schutzbeutel (+1€)",
-            opt_insurance: "+ Versicherung (3%)",
-            c_sec3: "3. Verkaufsplattform",
-            lbl_sell_platform: "Wo wirst du verkaufen?",
-            res_c_title: "Haul Gesamtübersicht",
-            res_net_profit: "Nettogewinn",
-            res_roi: "Gesamt-ROI",
-            res_item_cost: "Gesamte Warenkosten:",
-            res_weight: "Paketgewicht:",
-            res_shipping: "Versandkosten:",
-            res_fees: "Gebühren & Verpackung:",
-            res_total_cost: "Gesamte Einkaufskosten:",
-            res_planned_rev: "Geplanter Umsatz:",
-            res_breakeven: "Mindestverkaufspreis (Break-Even):",
-            risk_msg: "⚠️ WARNUNG: Paket wiegt über 10kg oder enthält risikoreiche Artikel (Parfüm/Batterien)! Höheres Zollrisiko.",
-            v_title: "Vinted / Lokaler Flip",
-            v_buy_price: "Kaufpreis (€)",
-            v_shipping: "Versand + Gebühren (€)",
-            v_renovation: "Reinigung / Reparatur (€)",
-            v_sell_price: "Verkaufspreis (€)",
-            v_res_title: "Flip Ergebnisse",
-            v_res_total_cost: "Gesamtkosten:",
-            v_res_sell_fee: "Verkaufsgebühr:",
-            v_res_net_yield: "Nettoertrag:",
-            fb_head: "Hast du Idee zur Verbesserung?",
-            fb_sub: "Teile uns mit, welche Funktion du sehen möchtest.",
-            ph_email_opt: "Deine E-Mail (optional)",
-            ph_fb_note: "Deine Idee...",
-            btn_send_idea: "IDEE SENDEN",
-            item_default_name: "Artikel",
-            lbl_item_name: "Name",
-            lbl_category: "Kategorie",
-            cat_clothing: "Kleidung / Standard",
-            cat_perfume: "Parfüm / Flüssigkeiten (+35%)",
-            cat_battery: "Elektronik (+20%)",
-            cat_luxury: "Luxus / Marke (+15%)",
-            lbl_buy_price: "Kaufpreis",
-            lbl_weight: "Nettogewicht (Gramm)",
-            lbl_target_price: "Verkaufspreis (€)",
-            lbl_box: "Mit Schuhkarton (+350g)",
-            status_top: "TOP HAUL",
-            status_profit: "GEWINNBRINGENDER HAUL",
-            status_loss: "VERLUSTREICHER HAUL",
-            status_v_profit: "SUPER LOKALER FLIP",
-            status_v_loss: "VERLUSTREICHER FLIP"
-        }
-    };
+    <script>
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            databaseURL: "https://TVOJA-FIREBASE-DATABASE-URL.firebaseio.com" // Nahraď svojou URL z Firebase
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-    let currentLang = 'en';
+        const CNY_TO_EUR = 0.13; // Kurz CNY -> EUR
 
-    function changeLanguage(lang) {
-        currentLang = lang;
-        document.querySelectorAll('.lang-select').forEach(sel => sel.value = lang);
-
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            if (translations[lang] && translations[lang][key]) {
-                el.innerText = translations[lang][key];
+        // DEVICE ID GENERATOR (Zamknutie na 1 zariadenie)
+        function getDeviceId() {
+            let id = localStorage.getItem('resell_device_id');
+            if (!id) {
+                id = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+                localStorage.setItem('resell_device_id', id);
             }
-        });
+            return id;
+        }
 
-        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-            const key = el.getAttribute('data-i18n-ph');
-            if (translations[lang] && translations[lang][key]) {
-                el.placeholder = translations[lang][key];
+        // OVERENIE KÓDU VOČI FIREBASE
+        function verifyCode() {
+            const inputCode = document.getElementById('accessCodeInput').value.trim();
+            const errEl = document.getElementById('pw-error');
+            const myDeviceId = getDeviceId();
+
+            if (!inputCode) {
+                errEl.innerText = "Zadajte prosím kód!";
+                errEl.style.display = "block";
+                return;
             }
-        });
 
-        renderTabs();
-        calcChina();
-        calcVinted();
-    }
-
-    let VALID_CODES = [
-        "RESELL-9912", "RESELL-4820", "START-2026", "RESELL-1049", "RESELL-2184",
-        "RESELL-3391", "RESELL-4512", "RESELL-5678", "RESELL-6834", "RESELL-7921",
-        "HAUL-9081", "HAUL-8172", "PRO-1001", "PRO-1002", "VIP-8812", "VIP-7723"
-    ];
-
-    document.addEventListener('DOMContentLoaded', () => {
-        if (localStorage.getItem('resell_calc_unlocked') === 'true') {
-            document.getElementById('landing-page').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
-        }
-    });
-
-    function generateNewCode() {
-        return 'CODE-' + Math.floor(100000 + Math.random() * 900000);
-    }
-
-    async function checkAccess() {
-        const inputCode = document.getElementById('activation-code').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const payBtn = document.querySelector('.btn-pay');
-
-        if (!email || !inputCode) return alert("Please fill in email and activation code.");
-        if (!VALID_CODES.includes(inputCode)) return alert("Invalid activation code!");
-
-        const newCode = generateNewCode();
-        payBtn.innerText = "...";
-        payBtn.disabled = true;
-
-        try {
-            await fetch('https://formspree.io/f/mgawkqyq', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    typ: "CODE ACTIVATION",
-                    pouzity_kod: inputCode,
-                    novy_kod: newCode,
-                    zakaznik_email: email
-                })
+            database.ref('codes/' + inputCode).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    
+                    if (data.deviceId && data.deviceId !== myDeviceId) {
+                        errEl.innerText = "Tento kód už bol použitý na inom zariadení!";
+                        errEl.style.display = "block";
+                    } else {
+                        // Úspešná aktivácia alebo opätovné prihlásenie z rovnakého zariadenia
+                        database.ref('codes/' + inputCode).update({ deviceId: myDeviceId });
+                        localStorage.setItem('resell_auth_code', inputCode);
+                        document.getElementById('paywall').style.display = 'none';
+                    }
+                } else {
+                    errEl.innerText = "Neplatný prístupový kód!";
+                    errEl.style.display = "block";
+                }
+            }).catch(err => {
+                errEl.innerText = "Chyba pripojenia k databáze!";
+                errEl.style.display = "block";
             });
-
-            localStorage.setItem('resell_calc_unlocked', 'true');
-            localStorage.setItem('resell_calc_user_email', email);
-
-            document.getElementById('landing-page').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
-
-        } catch (error) {
-            alert("Verification error.");
-            payBtn.innerText = translations[currentLang].btn_unlock;
-            payBtn.disabled = false;
         }
-    }
 
-    async function sendSupportMessage() {
-        const email = document.getElementById('support-email').value.trim();
-        const note = document.getElementById('support-note').value.trim();
-        const btn = document.querySelector('.btn-support');
-
-        if (!email || !note) return alert("Please complete all fields.");
-        btn.disabled = true;
-
-        try {
-            await fetch('https://formspree.io/f/mgawkqyq', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ typ: "SUPPORT / PAYMENT ISSUE", zakaznik_email: email, sprava_od_zakaznika: note })
-            });
-            alert("Message sent!");
-            document.getElementById('support-note').value = '';
-            btn.disabled = false;
-        } catch (error) {
-            alert("Error sending message.");
-            btn.disabled = false;
-        }
-    }
-
-    async function sendFeedbackMessage() {
-        const email = document.getElementById('feedback-email').value.trim();
-        const note = document.getElementById('feedback-note').value.trim();
-        if (!note) return alert("Please write your suggestion.");
-
-        try {
-            await fetch('https://formspree.io/f/mgawkqyq', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ typ: "FEATURE SUGGESTION", zakaznik_email: email || "none", sprava_od_zakaznika: note })
-            });
-            alert("Thank you for your feedback!");
-            document.getElementById('feedback-note').value = '';
-        } catch (error) { alert("Error sending feedback."); }
-    }
-
-    // LOGIKA KALKULAČKY
-    let items = [];
-    let activeItemId = null;
-
-    function switchMainTab(tabId, btn) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
-    }
-
-    function addNewItem() {
-        const itemId = Date.now();
-        const itemNumber = items.length + 1;
-        let template = { price: 180, currency: 'CNY', category: 'clothing', weight: 800, sellPrice: 85, addBox: true };
-       
-        if (items.length > 0) {
-            const lastItem = items[items.length - 1];
-            template = { price: lastItem.price, currency: lastItem.currency, category: lastItem.category, weight: lastItem.weight, sellPrice: lastItem.sellPrice, addBox: lastItem.addBox };
-        }
-       
-        const newItem = { id: itemId, name: `${translations[currentLang].item_default_name} #${itemNumber}`, ...template };
-        items.push(newItem);
-        renderTabs();
-        selectItem(itemId);
-    }
-
-    function removeItem(itemId, event) {
-        event.stopPropagation();
-        if (items.length <= 1) return;
-        items = items.filter(i => i.id !== itemId);
-        renderTabs();
-        selectItem(items[items.length - 1].id);
-    }
-
-    function selectItem(itemId) {
-        activeItemId = itemId;
-        document.querySelectorAll('.item-tab-pill').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.item-card-content').forEach(el => el.classList.remove('active'));
-
-        const activePill = document.getElementById(`pill_${itemId}`);
-        const activeContent = document.getElementById(`content_${itemId}`);
-       
-        if (activePill) activePill.classList.add('active');
-        if (activeContent) activeContent.classList.add('active');
-
-        calcChina();
-    }
-
-    function renderTabs() {
-        const tabsBar = document.getElementById('itemTabsBar');
-        const contentsContainer = document.getElementById('itemContentsContainer');
-        tabsBar.innerHTML = ''; contentsContainer.innerHTML = '';
-
-        const t = translations[currentLang];
-
-        items.forEach((item) => {
-            const pill = document.createElement('div');
-            pill.className = 'item-tab-pill';
-            pill.id = `pill_${item.id}`;
-            pill.onclick = () => selectItem(item.id);
-            pill.innerHTML = `<span>${item.name}</span>${items.length > 1 ? `<button class="btn-remove-pill" onclick="removeItem(${item.id}, event)">✕</button>` : ''}`;
-            tabsBar.appendChild(pill);
-
-            const content = document.createElement('div');
-            content.className = 'item-card-content';
-            content.id = `content_${item.id}`;
-            content.innerHTML = `
-                <div class="grid-2">
-                    <div class="group"><label>${t.lbl_item_name}</label><input type="text" value="${item.name}" onchange="updateItemData(${item.id}, 'name', this.value)"></div>
-                    <div class="group">
-                        <label>${t.lbl_category}</label>
-                        <select onchange="updateItemData(${item.id}, 'category', this.value)">
-                            <option value="clothing" ${item.category === 'clothing' ? 'selected' : ''}>${t.cat_clothing}</option>
-                            <option value="perfume" ${item.category === 'perfume' ? 'selected' : ''}>${t.cat_perfume}</option>
-                            <option value="battery" ${item.category === 'battery' ? 'selected' : ''}>${t.cat_battery}</option>
-                            <option value="luxury" ${item.category === 'luxury' ? 'selected' : ''}>${t.cat_luxury}</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div class="group">
-                        <label>${t.lbl_buy_price}</label>
-                        <div class="currency-input">
-                            <input type="number" value="${item.price}" oninput="updateItemData(${item.id}, 'price', parseFloat(this.value)||0)">
-                            <select onchange="updateItemData(${item.id}, 'currency', this.value)">
-                                <option value="CNY" ${item.currency === 'CNY' ? 'selected' : ''}>¥ RMB</option>
-                                <option value="EUR" ${item.currency === 'EUR' ? 'selected' : ''}>€ EUR</option>
-                                <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>$ USD</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="group"><label>${t.lbl_weight}</label><input type="number" value="${item.weight}" oninput="updateItemData(${item.id}, 'weight', parseFloat(this.value)||0)"></div>
-                </div>
-                <div class="grid-2">
-                    <div class="group"><label>${t.lbl_target_price}</label><input type="number" value="${item.sellPrice}" oninput="updateItemData(${item.id}, 'sellPrice', parseFloat(this.value)||0)"></div>
-                    <div class="checkbox-item" style="margin-top: 22px;">
-                        <input type="checkbox" id="box_${item.id}" ${item.addBox ? 'checked' : ''} onchange="updateItemData(${item.id}, 'addBox', this.checked)">
-                        <label for="box_${item.id}">${t.lbl_box}</label>
-                    </div>
-                </div>
-            `;
-            contentsContainer.appendChild(content);
-        });
-    }
-
-    function updateItemData(itemId, field, value) {
-        const item = items.find(i => i.id === itemId);
-        if (item) {
-            item[field] = value;
-            if (field === 'name') {
-                const pillSpan = document.querySelector(`#pill_${itemId} span`);
-                if (pillSpan) pillSpan.innerText = value;
+        // AUTO-LOGIN AK UŽ MÁ KÓD V STORAGE
+        window.onload = function() {
+            const savedCode = localStorage.getItem('resell_auth_code');
+            if (savedCode) {
+                document.getElementById('accessCodeInput').value = savedCode;
+                verifyCode();
             }
-            calcChina();
+        };
+
+        // PREKLADY (Slovenčina, Čeština, English, Deutsch, Polski, Magyar)
+        const translations = {
+            sk: {
+                pwTitle: "Aktivácia Kalkulačky", pwDesc: "Pre prístup k nástroju zadajte váš aktivovaný kód.",
+                pwNotice: "⚠️ <strong>Dôležité:</strong> Pri platbe cez QR kód alebo prevod nezabudnite do poznámky pre príjemcu napísať váš e-mail, na ktorý vám pošleme kód!",
+                pwBtn: "Aktivovať prístup", tabCn: "China Haul", tabVt: "Vinted / Local", tabFb: "Podpora",
+                lblItem: "Typ predmetu", lblCnPrice: "Cena v Číne (¥ CNY)", lblCnWeight: "Váha (g)",
+                lblCnShiprate: "Poštovné (€ / kg)", lblCnSell: "Predajná cena (€)",
+                lblResItemprice: "Cena produktu:", lblResShipprice: "Odhadované poštovné:",
+                lblResTotalcost: "Celkové náklady:", lblResProfit: "Čistý zisk:",
+                lblVtBuy: "Nákupná cena (€)", lblVtShip: "Moje poštovné/balné (€)",
+                lblVtSell: "Predajná cena (€)", lblVtFee: "Poplatok platformy (%)",
+                lblResVtCosts: "Celkové výdavky:", lblResVtFeeval: "Poplatok z predaja:", lblResVtProfit: "Čistý zisk:",
+                lblFbEmail: "Váš E-mail (voliteľné)", lblFbMsg: "Návrh na zlepšenie / Správa", btnFbSend: "Odoslať správu"
+            },
+            cz: {
+                pwTitle: "Aktivace Kalkulačky", pwDesc: "Pro přístup k nástroji zadejte váš aktivovaný kód.",
+                pwNotice: "⚠️ <strong>Důležité:</strong> Při platbě nezapomeňte do poznámky pro příjemce napsat váš e-mail!",
+                pwBtn: "Aktivovat přístup", tabCn: "China Haul", tabVt: "Vinted / Local", tabFb: "Podpora",
+                lblItem: "Typ předmětu", lblCnPrice: "Cena v Číně (¥ CNY)", lblCnWeight: "Váha (g)",
+                lblCnShiprate: "Poštovné (€ / kg)", lblCnSell: "Prodejní cena (€)",
+                lblResItemprice: "Cena produktu:", lblResShipprice: "Odhadované poštovné:",
+                lblResTotalcost: "Celkové náklady:", lblResProfit: "Čistý zisk:",
+                lblVtBuy: "Nákupní cena (€)", lblVtShip: "Moje poštovné (€)",
+                lblVtSell: "Prodejní cena (€)", lblVtFee: "Poplatek platformy (%)",
+                lblResVtCosts: "Celkové výdaje:", lblResVtFeeval: "Poplatek z prodeje:", lblResVtProfit: "Čistý zisk:",
+                lblFbEmail: "Váš E-mail (volitelné)", lblFbMsg: "Návrh na zlepšení / Zpráva", btnFbSend: "Odeslat zprávu"
+            },
+            en: {
+                pwTitle: "Calculator Activation", pwDesc: "Enter your activated code to access the tool.",
+                pwNotice: "⚠️ <strong>Important:</strong> When making a payment, don't forget to include your email address in the note!",
+                pwBtn: "Activate Access", tabCn: "China Haul", tabVt: "Vinted / Local", tabFb: "Support",
+                lblItem: "Item Type", lblCnPrice: "China Price (¥ CNY)", lblCnWeight: "Weight (g)",
+                lblCnShiprate: "Shipping (€ / kg)", lblCnSell: "Selling Price (€)",
+                lblResItemprice: "Product Price:", lblResShipprice: "Est. Shipping:",
+                lblResTotalcost: "Total Cost:", lblResProfit: "Net Profit:",
+                lblVtBuy: "Buy Price (€)", lblVtShip: "My Shipping (€)",
+                lblVtSell: "Sell Price (€)", lblVtFee: "Platform Fee (%)",
+                lblResVtCosts: "Total Expenses:", lblResVtFeeval: "Sale Fee:", lblResVtProfit: "Net Profit:",
+                lblFbEmail: "Your Email (optional)", lblFbMsg: "Suggestion / Message", btnFbSend: "Send Message"
+            }
+        };
+
+        function changeLanguage() {
+            const lang = document.getElementById('langSelect').value;
+            const t = translations[lang] || translations['en'];
+
+            document.getElementById('pw-title').innerText = t.pwTitle;
+            document.getElementById('pw-desc').innerText = t.pwDesc;
+            document.getElementById('pw-notice').innerHTML = t.pwNotice;
+            document.getElementById('pw-btn').innerText = t.pwBtn;
+            document.getElementById('tab-cn-btn').innerText = t.tabCn;
+            document.getElementById('tab-vt-btn').innerText = t.tabVt;
+            document.getElementById('tab-fb-btn').innerText = t.tabFb;
+            document.getElementById('lbl-item').innerText = t.lblItem;
+            document.getElementById('lbl-cn-price').innerText = t.lblCnPrice;
+            document.getElementById('lbl-cn-weight').innerText = t.lblCnWeight;
+            document.getElementById('lbl-cn-shiprate').innerText = t.lblCnShiprate;
+            document.getElementById('lbl-cn-sell').innerText = t.lblCnSell;
+            document.getElementById('lbl-res-itemprice').innerText = t.lblResItemprice;
+            document.getElementById('lbl-res-shipprice').innerText = t.lblResShipprice;
+            document.getElementById('lbl-res-totalcost').innerText = t.lblResTotalcost;
+            document.getElementById('lbl-res-profit').innerText = t.lblResProfit;
+            document.getElementById('lbl-vt-buy').innerText = t.lblVtBuy;
+            document.getElementById('lbl-vt-ship').innerText = t.lblVtShip;
+            document.getElementById('lbl-vt-sell').innerText = t.lblVtSell;
+            document.getElementById('lbl-vt-fee').innerText = t.lblVtFee;
+            document.getElementById('lbl-res-vt-costs').innerText = t.lblResVtCosts;
+            document.getElementById('lbl-res-vt-feeval').innerText = t.lblResVtFeeval;
+            document.getElementById('lbl-res-vt-profit').innerText = t.lblResVtProfit;
+            document.getElementById('lbl-fb-email').innerText = t.lblFbEmail;
+            document.getElementById('lbl-fb-msg').innerText = t.lblFbMsg;
+            document.getElementById('btn-fb-send').innerText = t.btnFbSend;
         }
-    }
 
-    function calcChina() {
-        let totalProductEur = 0, totalWeightGrams = 0, totalPlannedSell = 0, maxCategoryMultiplier = 1.0, hasSpecialLine = false;
+        // TAB SWITCHING LOGIC
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tab).classList.add('active');
+            if(tab === 'china') document.getElementById('tab-cn-btn').classList.add('active');
+            if(tab === 'vinted') document.getElementById('tab-vt-btn').classList.add('active');
+            if(tab === 'feedback') document.getElementById('tab-fb-btn').classList.add('active');
+        }
 
-        items.forEach(item => {
-            let eurPrice = item.price;
-            if (item.currency === 'CNY') eurPrice = item.price * 0.131;
-            if (item.currency === 'USD') eurPrice = item.price * 0.92;
-            totalProductEur += eurPrice;
-            totalPlannedSell += item.sellPrice;
-            totalWeightGrams += item.weight + (item.addBox ? 350 : 0);
+        // PRESETS WEIGHT SELECTION
+        function updateItemData() {
+            const weights = {
+                shoes: 1200, hoodie: 800, tshirt: 250,
+                pants: 600, jacket: 1100, cap: 150, socks: 80
+            };
+            const val = document.getElementById('cn-item').value;
+            if (weights[val]) {
+                document.getElementById('cn-weight').value = weights[val];
+                calcChina();
+            }
+        }
 
-            if (item.category === 'perfume') { maxCategoryMultiplier = Math.max(maxCategoryMultiplier, 1.35); hasSpecialLine = true; }
-            else if (item.category === 'battery') { maxCategoryMultiplier = Math.max(maxCategoryMultiplier, 1.20); hasSpecialLine = true; }
-            else if (item.category === 'luxury') { maxCategoryMultiplier = Math.max(maxCategoryMultiplier, 1.15); hasSpecialLine = true; }
-        });
+        // CALCULATOR LOGIC - CHINA
+        function calcChina() {
+            const priceCNY = parseFloat(document.getElementById('cn-price').value) || 0;
+            const weightG = parseFloat(document.getElementById('cn-weight').value) || 0;
+            const shipRate = parseFloat(document.getElementById('cn-shiprate').value) || 0;
+            const sellPrice = parseFloat(document.getElementById('cn-sell').value) || 0;
 
-        let agent = document.getElementById('c1_agent').value;
-        let country = document.getElementById('c1_country').value;
-        let platform = document.getElementById('c1_platform').value;
+            const itemEur = priceCNY * CNY_TO_EUR;
+            const shipEur = (weightG / 1000) * shipRate;
+            const totalCost = itemEur + shipEur;
+            const profit = sellPrice - totalCost;
 
-        let topupFeePercent = agent === 'opbuy' ? 0.030 : (agent === 'acbuy' ? 0.040 : 0.035);
-        let topupCost = totalProductEur * topupFeePercent;
-        let countryRates = { SK: 13.8, CZ: 13.5, DE: 12.9, PL: 13.0, HU: 14.1 };
-        let chinaShipEur = ((totalWeightGrams / 1000) * (countryRates[country] || 13.8) + 6.0) * maxCategoryMultiplier;
+            document.getElementById('res-cn-itemprice').innerText = itemEur.toFixed(2) + ' €';
+            document.getElementById('res-cn-shipprice').innerText = shipEur.toFixed(2) + ' €';
+            document.getElementById('res-cn-totalcost').innerText = totalCost.toFixed(2) + ' €';
+            
+            const profitEl = document.getElementById('res-cn-profit');
+            profitEl.innerText = profit.toFixed(2) + ' €';
+            profitEl.className = profit >= 0 ? 'text-green' : 'text-yellow';
+        }
 
-        let extraPackCost = 0;
-        if (document.getElementById('c1_cornerProtect').checked) extraPackCost += 1.5;
-        if (document.getElementById('c1_bubbleWrap').checked) extraPackCost += 2.0;
-        if (document.getElementById('c1_moistureBag').checked) extraPackCost += 1.0;
-        if (document.getElementById('c1_insurance').checked) extraPackCost += (totalProductEur * 0.03);
+        // CALCULATOR LOGIC - VINTED
+        function calcVinted() {
+            const buy = parseFloat(document.getElementById('vt-buy').value) || 0;
+            const ship = parseFloat(document.getElementById('vt-ship').value) || 0;
+            const sell = parseFloat(document.getElementById('vt-sell').value) || 0;
+            const feePct = parseFloat(document.getElementById('vt-fee').value) || 0;
 
-        let platformFee = 0;
-        if (platform === 'shopify') platformFee = (totalPlannedSell * 0.029) + 0.30;
-        else if (platform === 'ebay') platformFee = (totalPlannedSell * 0.128) + 0.35;
-        else if (platform === 'stockx') platformFee = totalPlannedSell * 0.12;
+            const feeVal = sell * (feePct / 100);
+            const totalCost = buy + ship;
+            const profit = sell - totalCost - feeVal;
 
-        let totalCost = totalProductEur + topupCost + chinaShipEur + extraPackCost + platformFee;
-        let profit = totalPlannedSell - totalCost;
-        let roi = totalCost > 0 ? ((profit / totalCost) * 100) : 0;
+            document.getElementById('res-vt-costs').innerText = totalCost.toFixed(2) + ' €';
+            document.getElementById('res-vt-feeval').innerText = feeVal.toFixed(2) + ' €';
+            
+            const profitEl = document.getElementById('res-vt-profit');
+            profitEl.innerText = profit.toFixed(2) + ' €';
+            profitEl.className = profit >= 0 ? 'text-green' : 'text-yellow';
+        }
 
-        document.getElementById('c1_resProductEur').innerText = totalProductEur.toFixed(2) + ' €';
-        document.getElementById('c1_resChargedWeight').innerText = Math.round(totalWeightGrams) + ' g';
-        document.getElementById('c1_resChinaShip').innerText = chinaShipEur.toFixed(2) + ' €';
-        document.getElementById('c1_resPackFees').innerText = (topupCost + extraPackCost + platformFee).toFixed(2) + ' €';
-        document.getElementById('c1_resTotalCost').innerText = totalCost.toFixed(2) + ' €';
-        document.getElementById('c1_resTotalSell').innerText = totalPlannedSell.toFixed(2) + ' €';
-        document.getElementById('c1_resBreakEven').innerText = totalCost.toFixed(2) + ' €';
-        document.getElementById('c1_netProfit').innerText = profit.toFixed(2) + ' €';
-        document.getElementById('c1_netProfit').className = 'value ' + (profit >= 0 ? 'green' : 'red');
-        document.getElementById('c1_roi').innerText = roi.toFixed(1) + '%';
+        // FEEDBACK SUBMISSION TO FIREBASE
+        function sendFeedback() {
+            const email = document.getElementById('fb-email').value;
+            const msg = document.getElementById('fb-msg').value;
+            const status = document.getElementById('fb-status');
 
-        const t = translations[currentLang];
-        let statusEl = document.getElementById('c1_status');
-        statusEl.innerText = profit > 30 ? t.status_top : (profit >= 0 ? t.status_profit : t.status_loss);
-        statusEl.className = 'status-pill ' + (profit >= 0 ? 'bg-green' : 'bg-red');
-        document.getElementById('c1_riskBox').style.display = (totalWeightGrams > 10000 || hasSpecialLine) ? 'block' : 'none';
-    }
+            if (!msg) {
+                alert('Prosím zadajte správu.');
+                return;
+            }
 
-    function calcVinted() {
-        let buyPrice = parseFloat(document.getElementById('v_buyPrice').value) || 0;
-        let buyFees = parseFloat(document.getElementById('v_buyFees').value) || 0;
-        let renovation = parseFloat(document.getElementById('v_renovation').value) || 0;
-        let sellPrice = parseFloat(document.getElementById('v_sellPrice').value) || 0;
-        let platform = document.getElementById('v_sellPlatform').value;
-
-        let sellFee = 0;
-        if (platform === 'shopify') sellFee = (sellPrice * 0.029) + 0.30;
-        else if (platform === 'ebay') sellFee = (sellPrice * 0.128) + 0.35;
-
-        let totalBuyCost = buyPrice + buyFees + renovation;
-        let profit = sellPrice - sellFee - totalBuyCost;
-        let roi = totalBuyCost > 0 ? ((profit / totalBuyCost) * 100) : 0;
-
-        document.getElementById('v_resTotalBuy').innerText = totalBuyCost.toFixed(2) + ' €';
-        document.getElementById('v_resSellFee').innerText = sellFee.toFixed(2) + ' €';
-        document.getElementById('v_resNetYield').innerText = (sellPrice - sellFee).toFixed(2) + ' €';
-        document.getElementById('v_netProfit').innerText = profit.toFixed(2) + ' €';
-        document.getElementById('v_netProfit').className = 'value ' + (profit >= 0 ? 'green' : 'red');
-        document.getElementById('v_roi').innerText = roi.toFixed(1) + '%';
-
-        const t = translations[currentLang];
-        let statusEl = document.getElementById('v_status');
-        statusEl.innerText = profit >= 0 ? t.status_v_profit : t.status_v_loss;
-        statusEl.className = 'status-pill ' + (profit >= 0 ? 'bg-green' : 'bg-red');
-    }
-
-    addNewItem();
-    calcVinted();
-</script>
+            database.ref('feedback').push({
+                email: email || 'Anonym',
+                message: msg,
+                timestamp: Date.now()
+            }).then(() => {
+                status.innerText = 'Správa bola úspešne odoslaná!';
+                status.style.display = 'block';
+                document.getElementById('fb-email').value = '';
+                document.getElementById('fb-msg').value = '';
+                setTimeout(() => status.style.display = 'none', 3000);
+            });
+        }
+    </script>
 </body>
 </html>
