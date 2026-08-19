@@ -3,577 +3,1000 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resell Calculator Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Resell OS v4.1 - Pro Edition</title>
+    <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root {
             --bg-main: #0a0e17;
-            --card-bg: #111827;
-            --card-border: #1f2937;
-            --accent-blue: #2563eb;
-            --accent-blue-hover: #1d4ed8;
+            --bg-panel: #111827;
+            --bg-card: #1f2937;
+            --accent-cyan: #06b6d4;
             --accent-green: #10b981;
-            --accent-yellow: #f59e0b;
-            --text-main: #f9fafb;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --text-main: #f3f4f6;
             --text-muted: #9ca3af;
-            --input-bg: #1f2937;
-            --input-border: #374151;
+            --border-color: #374151;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            min-height: 100vh;
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 20px 10px; display: flex; justify-content: center; }
+        .wrapper { width: 100%; max-width: 1200px; }
+        
+        /* TOP BAR WITH LANGUAGE SELECTOR */
+        .top-bar {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 550px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            justify-content: flex-end;
+            margin-bottom: 15px;
         }
 
         .lang-select {
-            background: var(--input-bg);
+            background: var(--bg-panel);
             color: var(--text-main);
-            border: 1px solid var(--input-border);
+            border: 1px solid var(--border-color);
             padding: 6px 12px;
             border-radius: 8px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: var(--input-bg);
-            padding: 4px;
-            border-radius: 10px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn.active {
-            background: var(--accent-blue);
-            color: #fff;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        label {
-            display: block;
             font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
+            cursor: pointer;
+            outline: none;
         }
 
-        input, select {
+        /* PAYWALL STYLES */
+        #paywall-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .paywall-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .pw-card {
+            background-color: var(--bg-panel);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .pw-title {
+            color: var(--accent-cyan);
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .price {
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        /* NOTICE BOX */
+        .notice-box {
+            background-color: rgba(255, 170, 0, 0.15);
+            border: 1px solid #ffaa00;
+            color: #ffdd80;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            text-align: left;
+            line-height: 1.4;
+            margin-bottom: 18px;
+        }
+
+        .iban-box {
+            background-color: var(--bg-main);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            letter-spacing: 1px;
+            margin: 15px 0 5px 0;
+            word-break: break-all;
+        }
+
+        .sub-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+
+        .qr-container {
+            margin: 15px 0;
+        }
+
+        .qr-img {
+            width: 180px;
+            height: 180px;
+            background: #fff;
+            padding: 6px;
+            border-radius: 8px;
+        }
+
+        .pw-input {
             width: 100%;
             padding: 12px;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 8px;
-            color: var(--text-main);
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-main);
+            color: #fff;
+            box-sizing: border-box;
             font-size: 14px;
             outline: none;
         }
 
-        input:focus, select:focus {
-            border-color: var(--accent-blue);
-        }
-
-        .row {
-            display: flex;
-            gap: 12px;
-        }
-
-        .row .form-group {
-            flex: 1;
-        }
-
-        .results {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 20px;
-        }
-
-        .res-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .res-item.total {
-            border-top: 1px solid var(--card-border);
-            padding-top: 10px;
-            margin-top: 10px;
-            font-weight: 700;
-            font-size: 16px;
-        }
-
-        .text-green { color: var(--accent-green); }
-        .text-yellow { color: var(--accent-yellow); }
-
-        .btn-action {
+        .pw-btn {
             width: 100%;
             padding: 12px;
-            background: var(--accent-blue);
-            color: white;
+            background-color: var(--accent-cyan);
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
+            border-radius: 6px;
+            color: #000;
+            font-weight: bold;
+            font-size: 15px;
             cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .pw-btn:hover {
+            background-color: #22d3ee;
+        }
+
+        #pw-error {
+            color: var(--accent-red);
+            font-size: 13px;
             margin-top: 10px;
+            display: none;
         }
 
-        .btn-action:hover {
-            background: var(--accent-blue-hover);
+        /* MAIN APP STYLES */
+        #main-app {
+            display: none;
         }
 
-        /* Paywall Modal Styling */
-        .paywall-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            padding: 20px;
-        }
-
-        .paywall-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .notice-box {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid var(--accent-yellow);
-            color: var(--accent-yellow);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            margin: 15px 0;
-            text-align: left;
-        }
-
+        .tab-nav { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; flex-wrap: wrap; }
+        .tab-btn { background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-muted); padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+        .tab-btn:hover { color: #fff; border-color: var(--accent-cyan); }
+        .tab-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+        
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .dashboard { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 24px; }
+        @media (max-width: 950px) { .dashboard { grid-template-columns: 1fr; } }
+
+        .panel { background-color: var(--bg-panel); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
+        .section-title { font-size: 0.85rem; text-transform: uppercase; color: var(--accent-cyan); font-weight: 800; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .item-tabs-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; background: var(--bg-main); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); }
+        .item-tab-pill { background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .item-tab-pill.active { background: var(--accent-purple); color: #fff; border-color: var(--accent-purple); box-shadow: 0 0 10px rgba(139, 92, 246, 0.4); }
+        
+        .btn-add { background: var(--accent-cyan); color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 0.82rem; transition: 0.2s; box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+        .btn-add:hover { background: #22d3ee; transform: translateY(-1px); }
+        .btn-remove-pill { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: none; width: 18px; height: 18px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+        .btn-remove-pill:hover { background: var(--accent-red); color: #000; }
+
+        .item-card-content { display: none; background: var(--bg-card); border: 1px solid var(--border-color); padding: 18px; border-radius: 12px; margin-bottom: 20px; animation: fadeIn 0.2s ease-in-out; }
+        .item-card-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .group { margin-bottom: 12px; }
+        
+        label { display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-main); font-size: 0.9rem; outline: none; transition: 0.2s; }
+        input:focus, select:focus { border-color: var(--accent-cyan); box-shadow: 0 0 8px rgba(6, 182, 212, 0.3); }
+        
+        .currency-input { display: flex; gap: 6px; }
+        .currency-input select { width: 95px; }
+
+        .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-main); background: var(--bg-main); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .checkbox-item input { width: auto; }
+
+        .results-panel { background: linear-gradient(180deg, var(--bg-panel) 0%, #0d131f 100%); border: 1px solid var(--accent-cyan); }
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        .metric-card { background-color: var(--bg-main); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
+        .metric-card .title { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .metric-card .value { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+
+        .breakdown { font-size: 0.85rem; }
+        .b-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); color: var(--text-muted); }
+        .b-row:last-child { border-bottom: none; }
+        
+        .green { color: var(--accent-green) !important; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+        .red { color: var(--accent-red) !important; }
+        .purple { color: var(--accent-purple) !important; }
+
+        .status-pill { display: inline-block; padding: 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 800; margin-top: 14px; width: 100%; text-align: center; letter-spacing: 0.5px; }
+        .bg-green { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .bg-red { background-color: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        
+        .risk-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); padding: 12px; border-radius: 10px; margin-top: 12px; font-size: 0.78rem; color: var(--accent-red); display: none; line-height: 1.4; }
     </style>
 </head>
 <body>
 
-    <!-- PAYWALL / ACTIVATION OVERLAY -->
-    <div id="paywall" class="paywall-overlay" style="display: flex;">
-        <div class="paywall-card">
-            <h2 id="pw-title" style="margin-bottom: 10px;">Aktivácia Kalkulačky</h2>
-            <p id="pw-desc" style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">
-                Pre prístup k nástroju zadaním váš aktivovaný kód.
-            </p>
+<div class="wrapper">
 
-            <div class="notice-box" id="pw-notice">
-                ⚠️ <strong>Dôležité:</strong> Pri platbe cez QR kód alebo prevod nezabudnite do poznámky pre príjemcu napísať váš e-mail, na ktorý vám pošleme kód!
+    <!-- TOP BAR PRE VÝBER JAZYKA -->
+    <div class="top-bar">
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="sk">Slovenčina 🇸🇰</option>
+            <option value="cz">Čeština 🇨🇿</option>
+            <option value="en">English 🇬🇧</option>
+            <option value="de">Deutsch 🇩🇪</option>
+            <option value="pl">Polski 🇵🇱</option>
+            <option value="hu">Magyar 🇭🇺</option>
+        </select>
+    </div>
+
+    <!-- 1. PAYWALL OBRAZOVKA -->
+    <div id="paywall-screen">
+        <div class="paywall-container">
+
+            <div class="pw-card">
+                <div class="pw-title" id="t-pw-title">CENNÍK PRÍSTUPOV</div>
+                <div class="price-row">
+                    <span id="t-pw-sub">Mesačné predplatné (30 DNÍ)</span>
+                    <span class="price">4.99 € / mes.</span>
+                </div>
+                <div class="price-row">
+                    <span id="t-pw-vip">VIP Balík (30 Dní + Discord)</span>
+                    <span class="price">9.99 € / mes.</span>
+                </div>
             </div>
 
-            <div class="form-group">
-                <input type="text" id="accessCodeInput" placeholder="Zadajte prístupový kód">
+            <div class="pw-card">
+                <div class="notice-box" id="t-pw-notice">
+                    ⚠️ <b>DÔLEŽITÉ:</b> Pri odosielaní platby uveď do <b>poznámky pre príjemcu svoj E-mail</b>. Naň ti pošlem nový mesačný kód. Nezabudni skontrolovať aj priečinok <b>Spam</b>!
+                </div>
+
+                <div class="pw-title" id="t-pw-paymethod">Platba prevodom / QR kódom</div>
+                <div class="sub-text" id="t-pw-desc">Po zaplatení ti príde aktivačný kód na e-mail / do správy.</div>
+
+                <div class="iban-box">SK55 1100 0000 0029 7011 1093</div>
+                <div class="sub-text"><span id="t-pw-receiver">Meno príjemcu</span>: <b>Patrik Šuľaj</b></div>
+
+                <div class="qr-container">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=SK5511000000002970111093" class="qr-img" alt="Platobný QR kód">
+                </div>
             </div>
-            <button class="btn-action" onclick="verifyCode()" id="pw-btn">Aktivovať prístup</button>
-            <p id="pw-error" style="color: #ef4444; font-size: 12px; margin-top: 10px; display: none;"></p>
+
+            <div class="pw-card">
+                <div class="sub-text" style="text-align: left; margin-bottom: 8px;" id="t-pw-enter">Máš už kód? Zadaj svoj e-mail a aktivačný kód.</div>
+                <input type="email" id="input-email" class="pw-input" placeholder="Tvoj E-mail">
+                <input type="text" id="input-code" class="pw-input" placeholder="Zadaj aktivačný kód">
+                <button class="pw-btn" onclick="verifyCode()" id="t-pw-btn">ODOMKNÚŤ KALKULAČKU</button>
+                <div id="pw-error"></div>
+            </div>
+
+            <!-- NOVÉ OKIENKO NA PODPORU NA PAYWALLE -->
+            <div class="pw-card" style="border-color: var(--accent-cyan);">
+                <div class="pw-title" style="font-size: 15px;" id="t-pw-sup-title">Máš problém s platbou alebo kódom?</div>
+                <div class="sub-text" style="text-align: left; margin-bottom: 10px;" id="t-pw-sup-desc">Napíš nám priamo sem a vyriešime to (upozornenie pôjde na bratku123321@gmail.com).</div>
+                <input type="email" id="paywall-support-email" class="pw-input" placeholder="Tvoj E-mail">
+                <input type="text" id="paywall-support-msg" class="pw-input" placeholder="Napíš, aký je problém...">
+                <button class="pw-btn" onclick="sendPaywallSupport()" id="t-pw-sup-btn" style="background-color: var(--bg-main); color: var(--accent-cyan); border: 1px solid var(--accent-cyan);">Odoslať správu na podporu</button>
+                <div id="paywall-support-status" style="font-size: 13px; margin-top: 10px; color: var(--accent-green); display: none;"></div>
+            </div>
+
         </div>
     </div>
 
-    <!-- MAIN CALCULATOR APP -->
-    <div class="container">
-        <div class="header">
-            <h3>Resell Calculator</h3>
-            <select class="lang-select" id="langSelect" onchange="changeLanguage()">
-                <option value="sk">Slovenčina 🇸🇰</option>
-                <option value="cz">Čeština 🇨🇿</option>
-                <option value="en">English 🇬🇧</option>
-                <option value="de">Deutsch 🇩🇪</option>
-                <option value="pl">Polski 🇵🇱</option>
-                <option value="hu">Magyar 🇭🇺</option>
-            </select>
+    <!-- 2. HLAVNÁ KALKULAČKA -->
+    <div id="main-app">
+        <div class="tab-nav">
+            <button class="tab-btn active" id="tabBtnChina" onclick="switchMainTab('chinaTab', this)">1. Čína / Multi-Item Import</button>
+            <button class="tab-btn" id="tabBtnVinted" onclick="switchMainTab('vintedTab', this)">2. Vinted / Local Flip</button>
+            <button class="tab-btn" id="tabBtnFeedback" onclick="switchMainTab('feedbackTab', this)">3. Podpora / Feedback</button>
         </div>
 
-        <div class="tabs">
-            <button class="tab-btn active" id="tab-cn-btn" onclick="switchTab('china')">China Haul</button>
-            <button class="tab-btn" id="tab-vt-btn" onclick="switchTab('vinted')">Vinted / Local</button>
-            <button class="tab-btn" id="tab-fb-btn" onclick="switchTab('feedback')">Podpora</button>
-        </div>
+        <!-- TAB 1: CHINA MULTI-ITEM -->
+        <div id="chinaTab" class="tab-content active">
+            <div class="dashboard">
+                <div class="panel">
+                    <div class="section-title">
+                        <span id="t-c1-items">1. Predmety v Haule</span>
+                        <button class="btn-add" onclick="addNewItem()" id="t-c1-add">+ Nový Predmet</button>
+                    </div>
 
-        <!-- CHINA HAUL SECTION -->
-        <div id="tab-china" class="tab-content active">
-            <div class="form-group">
-                <label id="lbl-item">Typ predmetu</label>
-                <select id="cn-item" onchange="updateItemData()">
-                    <option value="custom">Vlastný predmet (Zadať ručne)</option>
-                    <option value="shoes">Topánky / Tenisky (~1200g)</option>
-                    <option value="hoodie">Mikina (~800g)</option>
-                    <option value="tshirt">Tričko (~250g)</option>
-                    <option value="pants">Nohavice / Tepláky (~600g)</option>
-                    <option value="jacket">Bunda (~1100g)</option>
-                    <option value="cap">Šiltovka / Čiapka (~150g)</option>
-                    <option value="socks">Ponožky / Doplnky (~80g)</option>
-                </select>
-            </div>
+                    <div class="item-tabs-bar" id="itemTabsBar"></div>
+                    <div id="itemContentsContainer"></div>
 
-            <div class="row">
-                <div class="form-group">
-                    <label id="lbl-cn-price">Cena v Číne (¥ CNY)</label>
-                    <input type="number" id="cn-price" placeholder="150" oninput="calcChina()">
-                </div>
-                <div class="form-group">
-                    <label id="lbl-cn-weight">Váha (g)</label>
-                    <input type="number" id="cn-weight" placeholder="800" oninput="calcChina()">
-                </div>
-            </div>
+                    <div class="section-title" id="t-c1-logistics">2. Agent & Logistika Balíka</div>
+                    <div class="grid-2">
+                        <div class="group">
+                            <label id="t-c1-agentlbl">Agent Platforma</label>
+                            <select id="c1_agent" onchange="calcChina()">
+                                <option value="litbuy">LitBuy (3.5% TopUp)</option>
+                                <option value="opbuy">OPBuy (3.0% TopUp)</option>
+                                <option value="acbuy">ACBuy (4.0% TopUp)</option>
+                            </select>
+                        </div>
+                        <div class="group">
+                            <label id="t-c1-countrylbl">Cieľová Krajina (Doručenie)</label>
+                            <select id="c1_country" onchange="calcChina()">
+                                <option value="SK">Slovensko (€13.8/kg)</option>
+                                <option value="CZ">Česko (€13.5/kg)</option>
+                                <option value="DE">Nemecko (€12.9/kg)</option>
+                                <option value="PL">Poľsko (€13.0/kg)</option>
+                                <option value="HU">Maďarsko (€14.1/kg)</option>
+                            </select>
+                        </div>
+                    </div>
 
-            <div class="row">
-                <div class="form-group">
-                    <label id="lbl-cn-shiprate">Poštovné (€ / kg)</label>
-                    <input type="number" id="cn-shiprate" value="12" oninput="calcChina()">
-                </div>
-                <div class="form-group">
-                    <label id="lbl-cn-sell">Predajná cena (€)</label>
-                    <input type="number" id="cn-sell" placeholder="60" oninput="calcChina()">
-                </div>
-            </div>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-item"><input type="checkbox" id="c1_cornerProtect" onchange="calcChina()"><label for="c1_cornerProtect" id="t-c1-cb1">+ Kartónové rohy (+1.5€)</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="c1_bubbleWrap" onchange="calcChina()"><label for="c1_bubbleWrap" id="t-c1-cb2">+ Bublinková fólia (+2€)</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="c1_moistureBag" onchange="calcChina()"><label for="c1_moistureBag" id="t-c1-cb3">+ Vodotesný obal (+1€)</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="c1_insurance" checked onchange="calcChina()"><label for="c1_insurance" id="t-c1-cb4">+ Poistenie balíka (3% z ceny)</label></div>
+                    </div>
 
-            <div class="results">
-                <div class="res-item"><span id="lbl-res-itemprice">Cena produktu:</span> <span id="res-cn-itemprice">0.00 €</span></div>
-                <div class="res-item"><span id="lbl-res-shipprice">Odhadované poštovné:</span> <span id="res-cn-shipprice">0.00 €</span></div>
-                <div class="res-item"><span id="lbl-res-totalcost">Celkové náklady:</span> <span id="res-cn-totalcost">0.00 €</span></div>
-                <div class="res-item total"><span id="lbl-res-profit">Čistý zisk:</span> <span id="res-cn-profit" class="text-green">0.00 €</span></div>
-            </div>
-        </div>
+                    <div class="section-title" id="t-c1-sellplat">3. Predajná Platforma</div>
+                    <div class="group">
+                        <label id="t-c1-sellplatlbl">Kde budeš veci predávať?</label>
+                        <select id="c1_platform" onchange="calcChina()">
+                            <option value="vinted">Vinted / Osobne (0% poplatok)</option>
+                            <option value="shopify">Shopify Store (2.9% + 0.30€)</option>
+                            <option value="ebay">eBay (12.8% + 0.35€)</option>
+                            <option value="stockx">StockX (12%)</option>
+                        </select>
+                    </div>
+                </div>
 
-        <!-- VINTED / LOCAL SECTION -->
-        <div id="tab-vinted" class="tab-content">
-            <div class="row">
-                <div class="form-group">
-                    <label id="lbl-vt-buy">Nákupná cena (€)</label>
-                    <input type="number" id="vt-buy" placeholder="20" oninput="calcVinted()">
-                </div>
-                <div class="form-group">
-                    <label id="lbl-vt-ship">Moje poštovné/balné (€)</label>
-                    <input type="number" id="vt-ship" value="0" oninput="calcVinted()">
-                </div>
-            </div>
+                <!-- RESULT PANEL -->
+                <div class="panel results-panel">
+                    <div class="section-title" id="t-c1-overview">Celkový Prehľad Haulu</div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="title" id="t-c1-netprof">Čistý Zisk</div>
+                            <div id="c1_netProfit" class="value green">0.00 €</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">Celkový ROI</div>
+                            <div id="c1_roi" class="value purple">0%</div>
+                        </div>
+                    </div>
 
-            <div class="row">
-                <div class="form-group">
-                    <label id="lbl-vt-sell">Predajná cena (€)</label>
-                    <input type="number" id="vt-sell" placeholder="45" oninput="calcVinted()">
-                </div>
-                <div class="form-group">
-                    <label id="lbl-vt-fee">Poplatok platformy (%)</label>
-                    <input type="number" id="vt-fee" value="0" oninput="calcVinted()">
-                </div>
-            </div>
+                    <div class="breakdown">
+                        <div class="b-row"><span id="t-c1-b1">Cena tovaru celkovo:</span><span id="c1_resProductEur">0.00 €</span></div>
+                        <div class="b-row"><span id="t-c1-b2">Finálna váha balíka:</span><span id="c1_resChargedWeight">0 g</span></div>
+                        <div class="b-row"><span id="t-c1-b3">Spoločné Poštovné (s doplatkami):</span><span id="c1_resChinaShip">0.00 €</span></div>
+                        <div class="b-row"><span id="t-c1-b4">Poplatky & Balenie:</span><span id="c1_resPackFees">0.00 €</span></div>
+                        <div class="b-row" style="font-weight: bold; margin-top: 6px; color: #fff;"><span id="t-c1-b5">Celkové Náklady (Nákup):</span><span id="c1_resTotalCost">0.00 €</span></div>
+                        <div class="b-row green" style="font-weight: bold;"><span id="t-c1-b6">Plánovaná Tržba (Predaj):</span><span id="c1_resTotalSell">0.00 €</span></div>
+                        <div class="b-row purple" style="font-weight: bold; margin-top: 4px;"><span id="t-c1-b7">Min. Predajná Cena (Break-Even):</span><span id="c1_resBreakEven">0.00 €</span></div>
+                    </div>
 
-            <div class="results">
-                <div class="res-item"><span id="lbl-res-vt-costs">Celkové výdavky:</span> <span id="res-vt-costs">0.00 €</span></div>
-                <div class="res-item"><span id="lbl-res-vt-feeval">Poplatok z predaja:</span> <span id="res-vt-feeval">0.00 €</span></div>
-                <div class="res-item total"><span id="lbl-res-vt-profit">Čistý zisk:</span> <span id="res-vt-profit" class="text-green">0.00 €</span></div>
+                    <div id="c1_status" class="status-pill bg-green">ZISKOVÝ HAUL</div>
+                    <div id="c1_riskBox" class="risk-box" id="t-c1-risk">⚠️ VAROVANIE: Balík presahuje 10kg alebo kombinuje rizikový tovar (parfém/batérie/luxus)! Hrozí vyššia šanca colnej kontroly alebo nútené rozdelenie do špeciálnych Sensitive liniek.</div>
+                </div>
             </div>
         </div>
 
-        <!-- FEEDBACK / SUPPORT SECTION -->
-        <div id="tab-feedback" class="tab-content">
-            <div class="form-group">
-                <label id="lbl-fb-email">Váš E-mail (voliteľné)</label>
-                <input type="email" id="fb-email" placeholder="vás@email.com">
+        <!-- TAB 2: VINTED FLIP -->
+        <div id="vintedTab" class="tab-content">
+            <div class="dashboard">
+                <div class="panel">
+                    <div class="section-title" id="t-v-title">Vinted / Lokálny Flip</div>
+                    <div class="grid-2">
+                        <div class="group"><label id="t-v-buy">Nákupná cena (€)</label><input type="number" id="v_buyPrice" value="45" oninput="calcVinted()"></div>
+                        <div class="group"><label id="t-v-fees">Pošta + Poplatky (€)</label><input type="number" id="v_buyFees" value="4.20" oninput="calcVinted()"></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="group"><label id="t-v-reno">Oprava / Čistenie (€)</label><input type="number" id="v_renovation" value="3.00" oninput="calcVinted()"></div>
+                        <div class="group"><label id="t-v-sell">Predajná cena (€)</label><input type="number" id="v_sellPrice" value="95" oninput="calcVinted()"></div>
+                    </div>
+                    <div class="group">
+                        <label id="t-v-plat">Predajná Platforma</label>
+                        <select id="v_sellPlatform" onchange="calcVinted()">
+                            <option value="vinted">Vinted / Osobne (0%)</option>
+                            <option value="shopify">Shopify (2.9% + 0.30€)</option>
+                            <option value="ebay">eBay (12.8% + 0.35€)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="panel results-panel">
+                    <div class="section-title" id="t-v-reshead">Výsledok Lokálneho Flipu</div>
+                    <div class="metrics-grid">
+                        <div class="metric-card"><div class="title" id="t-v-netprof">Čistý Zisk</div><div id="v_netProfit" class="value green">0.00 €</div></div>
+                        <div class="metric-card"><div class="title">ROI</div><div id="v_roi" class="value purple">0%</div></div>
+                    </div>
+                    <div class="breakdown">
+                        <div class="b-row"><span id="t-v-b1">Celkové Náklady:</span><span id="v_resTotalBuy">0.00 €</span></div>
+                        <div class="b-row"><span id="t-v-b2">Poplatok za predaj:</span><span id="v_resSellFee">0.00 €</span></div>
+                        <div class="b-row" style="font-weight: bold; color: #fff;"><span id="t-v-b3">Čistý Výnos:</span><span id="v_resNetYield">0.00 €</span></div>
+                    </div>
+                    <div id="v_status" class="status-pill bg-green">SUPER FLIP</div>
+                </div>
             </div>
-            <div class="form-group">
-                <label id="lbl-fb-msg">Návrh na zlepšenie / Správa</label>
-                <input type="text" id="fb-msg" placeholder="Čo by sme mali pridať?">
-            </div>
-            <button class="btn-action" id="btn-fb-send" onclick="sendFeedback()">Odoslať správu</button>
-            <p id="fb-status" style="font-size: 12px; margin-top: 10px; text-align: center; color: var(--accent-green); display: none;"></p>
         </div>
 
+        <!-- TAB 3: FEEDBACK / SUPPORT -->
+        <div id="feedbackTab" class="tab-content">
+            <div class="panel" style="max-width: 600px; margin: 0 auto;">
+                <div class="section-title" id="t-fb-title">Podpora a návrhy na zlepšenie</div>
+                <div class="group">
+                    <label id="t-fb-email">Váš E-mail (voliteľné)</label>
+                    <input type="email" id="fb-email" placeholder="vas@email.com">
+                </div>
+                <div class="group">
+                    <label id="t-fb-msg">Návrh na zlepšenie / Správa</label>
+                    <input type="text" id="fb-msg" placeholder="Čo by sme mohli v aplikácii vylepšiť?">
+                </div>
+                <button class="pw-btn" onclick="sendFeedback()" id="t-fb-btn" style="margin-top: 10px;">Odoslať správu</button>
+                <p id="fb-status" style="font-size: 13px; margin-top: 12px; text-align: center; color: var(--accent-green); display: none;"></p>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // FIREBASE CONFIGURATION
-        const firebaseConfig = {
-            databaseURL: "https://TVOJA-FIREBASE-DATABASE-URL.firebaseio.com" // Nahraď svojou URL z Firebase
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+</div>
 
-        const CNY_TO_EUR = 0.13; // Kurz CNY -> EUR
+<!-- FIREBASE & AUTH & APP LOGIC SCRIPT -->
+<script>
+  // FIREBASE CONFIGURATION
+  const firebaseConfig = {
+    apiKey: "AIzaSyC4uUl6zjjycoNI04bJGUgnXZ_rqvv6aDU",
+    authDomain: "resell-calculator-383ce.firebaseapp.com",
+    databaseURL: "https://resell-calculator-383ce-default-rtdb.firebaseio.com",
+    projectId: "resell-calculator-383ce",
+    storageBucket: "resell-calculator-383ce.firebasestorage.app",
+    messagingSenderId: "235442585610",
+    appId: "1:235442585610:web:1e8721068de6cb123e1ff3",
+    measurementId: "G-QE7VWGMN5N"
+  };
 
-        // DEVICE ID GENERATOR (Zamknutie na 1 zariadenie)
-        function getDeviceId() {
-            let id = localStorage.getItem('resell_device_id');
-            if (!id) {
-                id = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-                localStorage.setItem('resell_device_id', id);
-            }
-            return id;
-        }
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-        // OVERENIE KÓDU VOČI FIREBASE
-        function verifyCode() {
-            const inputCode = document.getElementById('accessCodeInput').value.trim();
-            const errEl = document.getElementById('pw-error');
-            const myDeviceId = getDeviceId();
+  // DEVICE ID GENERATOR
+  function getDeviceId() {
+      let id = localStorage.getItem('resell_device_id');
+      if (!id) {
+          id = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+          localStorage.setItem('resell_device_id', id);
+      }
+      return id;
+  }
 
-            if (!inputCode) {
-                errEl.innerText = "Zadajte prosím kód!";
-                errEl.style.display = "block";
-                return;
-            }
+  // OVERENIE KÓDU VOČI FIREBASE DATABÁZE
+  function verifyCode() {
+      const code = document.getElementById('input-code').value.trim().toUpperCase();
+      const errEl = document.getElementById('pw-error');
+      const myDeviceId = getDeviceId();
 
-            database.ref('codes/' + inputCode).once('value').then((snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    
-                    if (data.deviceId && data.deviceId !== myDeviceId) {
-                        errEl.innerText = "Tento kód už bol použitý na inom zariadení!";
-                        errEl.style.display = "block";
-                    } else {
-                        // Úspešná aktivácia alebo opätovné prihlásenie z rovnakého zariadenia
-                        database.ref('codes/' + inputCode).update({ deviceId: myDeviceId });
-                        localStorage.setItem('resell_auth_code', inputCode);
-                        document.getElementById('paywall').style.display = 'none';
-                    }
-                } else {
-                    errEl.innerText = "Neplatný prístupový kód!";
-                    errEl.style.display = "block";
-                }
-            }).catch(err => {
-                errEl.innerText = "Chyba pripojenia k databáze!";
-                errEl.style.display = "block";
-            });
-        }
+      if (!code) {
+          errEl.innerText = "Zadaj prosím aktivačný kód!";
+          errEl.style.display = "block";
+          return;
+      }
 
-        // AUTO-LOGIN AK UŽ MÁ KÓD V STORAGE
-        window.onload = function() {
-            const savedCode = localStorage.getItem('resell_auth_code');
-            if (savedCode) {
-                document.getElementById('accessCodeInput').value = savedCode;
-                verifyCode();
-            }
-        };
+      db.ref('codes/' + code).once('value').then((snapshot) => {
+          if (snapshot.exists()) {
+              const data = snapshot.val();
+              
+              if (data.deviceId && data.deviceId !== myDeviceId) {
+                  errEl.innerText = "Tento kód už bol použitý na inom zariadení!";
+                  errEl.style.display = "block";
+              } else {
+                  db.ref('codes/' + code).update({ deviceId: myDeviceId, used: true });
+                  localStorage.setItem('resell_auth_code', code);
+                  localStorage.setItem('resell_is_paid', 'true');
+                  
+                  errEl.style.display = "none";
+                  unlockApp();
+              }
+          } else {
+              errEl.innerText = "Neplatný aktivačný kód!";
+              errEl.style.display = "block";
+          }
+      }).catch(error => {
+          console.error("Firebase error:", error);
+          errEl.innerText = "Chyba pripojenia k databáze!";
+          errEl.style.display = "block";
+      });
+  }
 
-        // PREKLADY (Slovenčina, Čeština, English, Deutsch, Polski, Magyar)
-        const translations = {
-            sk: {
-                pwTitle: "Aktivácia Kalkulačky", pwDesc: "Pre prístup k nástroju zadajte váš aktivovaný kód.",
-                pwNotice: "⚠️ <strong>Dôležité:</strong> Pri platbe cez QR kód alebo prevod nezabudnite do poznámky pre príjemcu napísať váš e-mail, na ktorý vám pošleme kód!",
-                pwBtn: "Aktivovať prístup", tabCn: "China Haul", tabVt: "Vinted / Local", tabFb: "Podpora",
-                lblItem: "Typ predmetu", lblCnPrice: "Cena v Číne (¥ CNY)", lblCnWeight: "Váha (g)",
-                lblCnShiprate: "Poštovné (€ / kg)", lblCnSell: "Predajná cena (€)",
-                lblResItemprice: "Cena produktu:", lblResShipprice: "Odhadované poštovné:",
-                lblResTotalcost: "Celkové náklady:", lblResProfit: "Čistý zisk:",
-                lblVtBuy: "Nákupná cena (€)", lblVtShip: "Moje poštovné/balné (€)",
-                lblVtSell: "Predajná cena (€)", lblVtFee: "Poplatok platformy (%)",
-                lblResVtCosts: "Celkové výdavky:", lblResVtFeeval: "Poplatok z predaja:", lblResVtProfit: "Čistý zisk:",
-                lblFbEmail: "Váš E-mail (voliteľné)", lblFbMsg: "Návrh na zlepšenie / Správa", btnFbSend: "Odoslať správu"
-            },
-            cz: {
-                pwTitle: "Aktivace Kalkulačky", pwDesc: "Pro přístup k nástroji zadejte váš aktivovaný kód.",
-                pwNotice: "⚠️ <strong>Důležité:</strong> Při platbě nezapomeňte do poznámky pro příjemce napsat váš e-mail!",
-                pwBtn: "Aktivovat přístup", tabCn: "China Haul", tabVt: "Vinted / Local", tabFb: "Podpora",
-                lblItem: "Typ předmětu", lblCnPrice: "Cena v Číně (¥ CNY)", lblCnWeight: "Váha (g)",
-                lblCnShiprate: "Poštovné (€ / kg)", lblCnSell: "Prodejní cena (€)",
-                lblResItemprice: "Cena produktu:", lblResShipprice: "Odhadované poštovné:",
-                lblResTotalcost: "Celkové náklady:", lblResProfit: "Čistý zisk:",
-                lblVtBuy: "Nákupní cena (€)", lblVtShip: "Moje poštovné (€)",
-                lblVtSell: "Prodejní cena (€)", lblVtFee: "Poplatek platformy (%)",
-                lblResVtCosts: "Celkové výdaje:", lblResVtFeeval: "Poplatek z prodeje:", lblResVtProfit: "Čistý zisk:",
-                lblFbEmail: "Váš E-mail (volitelné)", lblFbMsg: "Návrh na zlepšení / Zpráva", btnFbSend: "Odeslat zprávu"
-            },
-            en: {
-                pwTitle: "Calculator Activation", pwDesc: "Enter your activated code to access the tool.",
-                pwNotice: "⚠️ <strong>Important:</strong> When making a payment, don't forget to include your email address in the note!",
-                pwBtn: "Activate Access", tabCn: "China Haul", tabVt: "Vinted / Local", tabFb: "Support",
-                lblItem: "Item Type", lblCnPrice: "China Price (¥ CNY)", lblCnWeight: "Weight (g)",
-                lblCnShiprate: "Shipping (€ / kg)", lblCnSell: "Selling Price (€)",
-                lblResItemprice: "Product Price:", lblResShipprice: "Est. Shipping:",
-                lblResTotalcost: "Total Cost:", lblResProfit: "Net Profit:",
-                lblVtBuy: "Buy Price (€)", lblVtShip: "My Shipping (€)",
-                lblVtSell: "Sell Price (€)", lblVtFee: "Platform Fee (%)",
-                lblResVtCosts: "Total Expenses:", lblResVtFeeval: "Sale Fee:", lblResVtProfit: "Net Profit:",
-                lblFbEmail: "Your Email (optional)", lblFbMsg: "Suggestion / Message", btnFbSend: "Send Message"
-            }
-        };
+  // AUTO-LOGIN KONTROLA PRI ŠTARTE
+  window.onload = function() {
+      const savedCode = localStorage.getItem('resell_auth_code');
+      const isPaid = localStorage.getItem('resell_is_paid');
+      
+      if (savedCode && isPaid === 'true') {
+          document.getElementById('input-code').value = savedCode;
+          db.ref('codes/' + savedCode).once('value').then((snapshot) => {
+              if (snapshot.exists() && snapshot.val().deviceId === getDeviceId()) {
+                  unlockApp();
+              } else {
+                  lockApp();
+              }
+          }).catch(() => lockApp());
+      } else {
+          lockApp();
+      }
 
-        function changeLanguage() {
-            const lang = document.getElementById('langSelect').value;
-            const t = translations[lang] || translations['en'];
+      addNewItem();
+      calcVinted();
+  }
 
-            document.getElementById('pw-title').innerText = t.pwTitle;
-            document.getElementById('pw-desc').innerText = t.pwDesc;
-            document.getElementById('pw-notice').innerHTML = t.pwNotice;
-            document.getElementById('pw-btn').innerText = t.pwBtn;
-            document.getElementById('tab-cn-btn').innerText = t.tabCn;
-            document.getElementById('tab-vt-btn').innerText = t.tabVt;
-            document.getElementById('tab-fb-btn').innerText = t.tabFb;
-            document.getElementById('lbl-item').innerText = t.lblItem;
-            document.getElementById('lbl-cn-price').innerText = t.lblCnPrice;
-            document.getElementById('lbl-cn-weight').innerText = t.lblCnWeight;
-            document.getElementById('lbl-cn-shiprate').innerText = t.lblCnShiprate;
-            document.getElementById('lbl-cn-sell').innerText = t.lblCnSell;
-            document.getElementById('lbl-res-itemprice').innerText = t.lblResItemprice;
-            document.getElementById('lbl-res-shipprice').innerText = t.lblResShipprice;
-            document.getElementById('lbl-res-totalcost').innerText = t.lblResTotalcost;
-            document.getElementById('lbl-res-profit').innerText = t.lblResProfit;
-            document.getElementById('lbl-vt-buy').innerText = t.lblVtBuy;
-            document.getElementById('lbl-vt-ship').innerText = t.lblVtShip;
-            document.getElementById('lbl-vt-sell').innerText = t.lblVtSell;
-            document.getElementById('lbl-vt-fee').innerText = t.lblVtFee;
-            document.getElementById('lbl-res-vt-costs').innerText = t.lblResVtCosts;
-            document.getElementById('lbl-res-vt-feeval').innerText = t.lblResVtFeeval;
-            document.getElementById('lbl-res-vt-profit').innerText = t.lblResVtProfit;
-            document.getElementById('lbl-fb-email').innerText = t.lblFbEmail;
-            document.getElementById('lbl-fb-msg').innerText = t.lblFbMsg;
-            document.getElementById('btn-fb-send').innerText = t.btnFbSend;
-        }
+  function unlockApp() {
+      document.getElementById('paywall-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+  }
 
-        // TAB SWITCHING LOGIC
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById('tab-' + tab).classList.add('active');
-            if(tab === 'china') document.getElementById('tab-cn-btn').classList.add('active');
-            if(tab === 'vinted') document.getElementById('tab-vt-btn').classList.add('active');
-            if(tab === 'feedback') document.getElementById('tab-fb-btn').classList.add('active');
-        }
+  function lockApp() {
+      document.getElementById('paywall-screen').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
+  }
 
-        // PRESETS WEIGHT SELECTION
-        function updateItemData() {
-            const weights = {
-                shoes: 1200, hoodie: 800, tshirt: 250,
-                pants: 600, jacket: 1100, cap: 150, socks: 80
-            };
-            const val = document.getElementById('cn-item').value;
-            if (weights[val]) {
-                document.getElementById('cn-weight').value = weights[val];
-                calcChina();
-            }
-        }
+  // ODOSLANIE PROBLÉMU Z PAYWALLU (Smeruje do Firebase pre bratku123321@gmail.com)
+  function sendPaywallSupport() {
+      const email = document.getElementById('paywall-support-email').value.trim();
+      const msg = document.getElementById('paywall-support-msg').value.trim();
+      const status = document.getElementById('paywall-support-status');
 
-        // CALCULATOR LOGIC - CHINA
-        function calcChina() {
-            const priceCNY = parseFloat(document.getElementById('cn-price').value) || 0;
-            const weightG = parseFloat(document.getElementById('cn-weight').value) || 0;
-            const shipRate = parseFloat(document.getElementById('cn-shiprate').value) || 0;
-            const sellPrice = parseFloat(document.getElementById('cn-sell').value) || 0;
+      if (!msg) {
+          alert('Prosím napíš, aký je problém.');
+          return;
+      }
 
-            const itemEur = priceCNY * CNY_TO_EUR;
-            const shipEur = (weightG / 1000) * shipRate;
-            const totalCost = itemEur + shipEur;
-            const profit = sellPrice - totalCost;
+      db.ref('support_requests').push({
+          targetEmail: "bratku123321@gmail.com",
+          userEmail: email || 'Anonym',
+          message: msg,
+          timestamp: Date.now()
+      }).then(() => {
+          status.innerText = 'Správa bola úspešne odoslaná! Ozveme sa ti na e-mail.';
+          status.style.display = 'block';
+          document.getElementById('paywall-support-email').value = '';
+          document.getElementById('paywall-support-msg').value = '';
+          setTimeout(() => status.style.display = 'none', 4000);
+      }).catch(err => {
+          alert('Chyba pri odosielaní: ' + err.message);
+      });
+  }
 
-            document.getElementById('res-cn-itemprice').innerText = itemEur.toFixed(2) + ' €';
-            document.getElementById('res-cn-shipprice').innerText = shipEur.toFixed(2) + ' €';
-            document.getElementById('res-cn-totalcost').innerText = totalCost.toFixed(2) + ' €';
-            
-            const profitEl = document.getElementById('res-cn-profit');
-            profitEl.innerText = profit.toFixed(2) + ' €';
-            profitEl.className = profit >= 0 ? 'text-green' : 'text-yellow';
-        }
+  // FEEDBACK ODOSLANIE DO FIREBASE
+  function sendFeedback() {
+      const email = document.getElementById('fb-email').value.trim();
+      const msg = document.getElementById('fb-msg').value.trim();
+      const status = document.getElementById('fb-status');
 
-        // CALCULATOR LOGIC - VINTED
-        function calcVinted() {
-            const buy = parseFloat(document.getElementById('vt-buy').value) || 0;
-            const ship = parseFloat(document.getElementById('vt-ship').value) || 0;
-            const sell = parseFloat(document.getElementById('vt-sell').value) || 0;
-            const feePct = parseFloat(document.getElementById('vt-fee').value) || 0;
+      if (!msg) {
+          alert('Prosím zadaj text správy.');
+          return;
+      }
 
-            const feeVal = sell * (feePct / 100);
-            const totalCost = buy + ship;
-            const profit = sell - totalCost - feeVal;
+      db.ref('feedback').push({
+          email: email || 'Anonym',
+          message: msg,
+          timestamp: Date.now()
+      }).then(() => {
+          status.innerText = 'Správa bola úspešne odoslaná!';
+          status.style.display = 'block';
+          document.getElementById('fb-email').value = '';
+          document.getElementById('fb-msg').value = '';
+          setTimeout(() => status.style.display = 'none', 3000);
+      });
+  }
 
-            document.getElementById('res-vt-costs').innerText = totalCost.toFixed(2) + ' €';
-            document.getElementById('res-vt-feeval').innerText = feeVal.toFixed(2) + ' €';
-            
-            const profitEl = document.getElementById('res-vt-profit');
-            profitEl.innerText = profit.toFixed(2) + ' €';
-            profitEl.className = profit >= 0 ? 'text-green' : 'text-yellow';
-        }
+  // JAZYKOVÉ PREKLADY (SK, CZ, EN, DE, PL, HU)
+  const translations = {
+      sk: {
+          pwTitle: "CENNÍK PRÍSTUPOV", sub: "Mesačné predplatné (30 DNÍ)", vip: "VIP Balík (30 Dní + Discord)",
+          notice: "⚠️ <b>DÔLEŽITÉ:</b> Pri odosielaní platby uveď do <b>poznámky pre príjemcu svoj E-mail</b>. Naň ti pošlem nový mesačný kód. Nezabudni skontrolovať aj priečinok <b>Spam</b>!",
+          paymethod: "Platba prevodom / QR kódom", desc: "Po zaplatení ti príde aktivačný kód na e-mail / do správy.", receiver: "Meno príjemcu",
+          enter: "Máš už kód? Zadaj svoj e-mail a aktivačný kód.", btn: "ODOMKNÚŤ KALKULAČKU",
+          supTitle: "Máš problém s platbou alebo kódom?", supDesc: "Napíš nám priamo sem a vyriešime to (upozornenie pôjde na bratku123321@gmail.com).", supBtn: "Odoslať správu na podporu",
+          tab1: "1. Čína / Multi-Item Import", tab2: "2. Vinted / Local Flip", tab3: "3. Podpora / Feedback",
+          c1Items: "1. Predmety v Haule", c1Add: "+ Nový Predmet", c1Log: "Agent & Logistika Balíka", c1Agent: "Agent Platforma", c1Country: "Cieľová Krajina (Doručenie)",
+          cb1: "+ Kartónové rohy (+1.5€)", cb2: "+ Bublinková fólia (+2€)", cb3: "+ Vodotesný obal (+1€)", cb4: "+ Poistenie balíka (3% z ceny)",
+          c1SellPlat: "3. Predajná Platforma", c1SellPlatLbl: "Kde budeš veci predávať?", c1Over: "Celkový Prehľad Haulu", c1Net: "Čistý Zisk",
+          b1: "Cena tovaru celkovo:", b2: "Finálna váha balíka:", b3: "Spoločné Poštovné (s doplatkami):", b4: "Poplatky & Balenie:", b5: "Celkové Náklady (Nákup):", b6: "Plánovaná Tržba (Predaj):", b7: "Min. Predajná Cena (Break-Even):",
+          vTitle: "Vinted / Lokálny Flip", vBuy: "Nákupná cena (€)", vFees: "Pošta + Poplatky (€)", vReno: "Oprava / Čistenie (€)", vSell: "Predajná cena (€)", vPlat: "Predajná Platforma", vRes: "Výsledok Lokálneho Flipu", vNet: "Čistý Zisk", vb1: "Celkové Náklady:", vb2: "Poplatok za predaj:", vb3: "Čistý Výnos:",
+          fbTitle: "Podpora a návrhy na zlepšenie", fbEmail: "Váš E-mail (voliteľné)", fbMsg: "Návrh na zlepšenie / Správa", fbBtn: "Odoslať správu"
+      },
+      cz: {
+          pwTitle: "CENÍK PŘÍSTUPŮ", sub: "Měsíční předplatné (30 DNÍ)", vip: "VIP Balíček (30 Dní + Discord)",
+          notice: "⚠️ <b>DŮLEŽITÉ:</b> Při odesílání platby uveď do <b>poznámky pro příjemce svůj E-mail</b>. Na něj ti pošlu nový kód.",
+          paymethod: "Platba převodem / QR kódem", desc: "Po zaplacení ti přijde aktivační kód na e-mail.", receiver: "Jméno příjemce",
+          enter: "Máš už kód? Zadej svůj e-mail a aktivační kód.", btn: "ODEMKNOUT KALKULAČKU",
+          supTitle: "Máš problém s platbou nebo kódem?", supDesc: "Napiš nám přímo sem a vyřešíme to.", supBtn: "Odeslat zprávu na podporu",
+          tab1: "1. Čína / Multi-Item Import", tab2: "2. Vinted / Local Flip", tab3: "3. Podpora / Feedback",
+          c1Items: "1. Předměty v Haulu", c1Add: "+ Nový Předmět", c1Log: "Agent & Logistika Balíku", c1Agent: "Agent Platforma", c1Country: "Cílová Země (Doručení)",
+          cb1: "+ Kartonové rohy (+1.5€)", cb2: "+ Bublinková fólie (+2€)", cb3: "+ Vodotěsný obal (+1€)", cb4: "+ Pojištění balíku (3% z ceny)",
+          c1SellPlat: "3. Prodejní Platforma", c1SellPlatLbl: "Kde budeš věci prodávat?", c1Over: "Celkový Přehled Haulu", c1Net: "Čistý Zisk",
+          b1: "Cena zboží celkově:", b2: "Finální váha balíku:", b3: "Společné Poštovné (s doplatky):", b4: "Poplatky & Balení:", b5: "Celkové Náklady (Nákup):", b6: "Plánovaná Tržba (Prodej):", b7: "Min. Prodejní Cena (Break-Even):",
+          vTitle: "Vinted / Lokální Flip", vBuy: "Nákupní cena (€)", vFees: "Pošta + Poplatky (€)", vReno: "Oprava / Čištění (€)", vSell: "Prodejní cena (€)", vPlat: "Prodejní Platforma", vRes: "Výsledek Lokálního Flipu", vNet: "Čistý Zisk", vb1: "Celkové Náklady:", vb2: "Poplatek za prodej:", vb3: "Čistý Výnos:",
+          fbTitle: "Podpora a návrhy na zlepšení", fbEmail: "Váš E-mail (volitelné)", fbMsg: "Návrh na zlepšení / Zpráva", fbBtn: "Odeslat zprávu"
+      },
+      en: {
+          pwTitle: "ACCESS PRICING", sub: "Monthly Subscription (30 DAYS)", vip: "VIP Bundle (30 Days + Discord)",
+          notice: "⚠️ <b>IMPORTANT:</b> Include your <b>Email in the transfer note</b> so we can send your activation code.",
+          paymethod: "Bank Transfer / QR Code", desc: "Activation code will be sent to your email after payment.", receiver: "Recipient Name",
+          enter: "Got a code? Enter your email and activation code.", btn: "UNLOCK CALCULATOR",
+          supTitle: "Having trouble with payment or code?", supDesc: "Write to us directly here and we'll resolve it.", supBtn: "Send Support Message",
+          tab1: "1. China / Multi-Item Import", tab2: "2. Vinted / Local Flip", tab3: "3. Support / Feedback",
+          c1Items: "1. Items in Haul", c1Add: "+ New Item", c1Log: "Agent & Package Logistics", c1Agent: "Agent Platform", c1Country: "Destination Country",
+          cb1: "+ Carton Corners (+1.5€)", cb2: "+ Bubble Wrap (+2€)", cb3: "+ Waterproof Bag (+1€)", cb4: "+ Package Insurance (3%)",
+          c1SellPlat: "3. Selling Platform", c1SellPlatLbl: "Where will you sell items?", c1Over: "Haul Overview", c1Net: "Net Profit",
+          b1: "Total Product Price:", b2: "Final Package Weight:", b3: "Shared Shipping:", b4: "Fees & Packaging:", b5: "Total Cost (Buy):", b6: "Planned Revenue (Sell):", b7: "Min. Selling Price (Break-Even):",
+          vTitle: "Vinted / Local Flip", vBuy: "Buy Price (€)", vFees: "Shipping + Fees (€)", vReno: "Repair / Cleaning (€)", vSell: "Sell Price (€)", vPlat: "Selling Platform", vRes: "Local Flip Result", vNet: "Net Profit", vb1: "Total Costs:", vb2: "Selling Fee:", vb3: "Net Yield:",
+          fbTitle: "Support and Suggestions", fbEmail: "Your Email (optional)", fbMsg: "Suggestion / Message", fbBtn: "Send Message"
+      },
+      de: {
+          pwTitle: "ZUGANGSPREISE", sub: "Monatsabo (30 TAGE)", vip: "VIP Paket (30 Tage + Discord)",
+          notice: "⚠️ <b>WICHTIG:</b> Bitte gib deine <b>E-Mail im Verwendungszweck</b> an.",
+          paymethod: "Überweisung / QR-Code", desc: "Der Aktivierungscode wird per E-Mail gesendet.", receiver: "Empfänger",
+          enter: "Hast du einen Code? E-Mail und Code eingeben.", btn: "RECHNER FREISCHALTEN",
+          supTitle: "Probleme mit Zahlung oder Code?", supDesc: "Schreibe uns direkt hier.", supBtn: "Support-Nachricht senden",
+          tab1: "1. China / Multi-Item Import", tab2: "2. Vinted / Local Flip", tab3: "3. Support / Feedback",
+          c1Items: "1. Artikel im Haul", c1Add: "+ Neuer Artikel", c1Log: "Agent & Logistik", c1Agent: "Agent", c1Country: "Zielland",
+          cb1: "+ Kartonecken (+1.5€)", cb2: "+ Luftpolsterfolie (+2€)", cb3: "+ Wasserdichte Tasche (+1€)", cb4: "+ Versicherung (3%)",
+          c1SellPlat: "3. Verkaufsplattform", c1SellPlatLbl: "Wo wirst du verkaufen?", c1Over: "Haul Übersicht", c1Net: "Nettogewinn",
+          b1: "Produktpreis gesamt:", b2: "Paketgewicht:", b3: "Versandkosten:", b4: "Gebühren & Verpackung:", b5: "Gesamtkosten:", b6: "Geplanter Umsatz:", b7: "Break-Even Preis:",
+          vTitle: "Vinted / Lokaler Flip", vBuy: "Kaufpreis (€)", vFees: "Versand + Gebühren (€)", vReno: "Reinigung (€)", vSell: "Verkaufspreis (€)", vPlat: "Plattform", vRes: "Ergebnis", vNet: "Nettogewinn", vb1: "Kosten gesamt:", vb2: "Verkaufsgebühr:", vb3: "Nettoerlös:",
+          fbTitle: "Support und Vorschläge", fbEmail: "Deine E-Mail (optional)", fbMsg: "Nachricht / Vorschlag", fbBtn: "Nachricht senden"
+      },
+      pl: {
+          pwTitle: "CENNIK DOSTĘPU", sub: "Subskrypcja miesięczna (30 DNI)", vip: "Pakiet VIP (30 Dni + Discord)",
+          notice: "⚠️ <b>WAŻNE:</b> W tytule przelewu podaj swój <b>E-mail</b>.",
+          paymethod: "Przelew / Kod QR", desc: "Kod aktywacyjny zostanie wysłany e-mailem.", receiver: "Odbiorca",
+          enter: "Masz kod? Wpisz e-mail i kod aktywacyjny.", btn: "ODBLOKUJ KALKULATOR",
+          supTitle: "Problem z płatnością lub kodem?", supDesc: "Napisz do nas bezpośrednio tutaj.", supBtn: "Wyślij wiadomość",
+          tab1: "1. Chiny / Import", tab2: "2. Vinted / Lokalny Flip", tab3: "3. Wsparcie / Feedback",
+          c1Items: "1. Przedmioty w Paczce", c1Add: "+ Nowy Przedmiot", c1Log: "Agent i Logistyka", c1Agent: "Platforma Agenta", c1Country: "Kraj Docelowy",
+          cb1: "+ Rogi kartonowe (+1.5€)", cb2: "+ Folia bąbelkowa (+2€)", cb3: "+ Worek wodoodporny (+1€)", cb4: "+ Ubezpieczenie (3%)",
+          c1SellPlat: "3. Platforma Sprzedażowa", c1SellPlatLbl: "Gdzie będziesz sprzedawać?", c1Over: "Przegląd Paczki", c1Net: "Czysty Zysk",
+          b1: "Cena towarów:", b2: "Waga paczki:", b3: "Wysyłka:", b4: "Opłaty i pakowanie:", b5: "Koszty całkowite:", b6: "Planowany przychód:", b7: "Cena minimalna (Break-Even):",
+          vTitle: "Vinted / Lokalny Flip", vBuy: "Cena zakupu (€)", vFees: "Wysyłka + opłaty (€)", vReno: "Czyszczenie (€)", vSell: "Cena sprzedaży (€)", vPlat: "Platforma", vRes: "Wynik", vNet: "Czysty Zysk", vb1: "Koszty całkowite:", vb2: "Prowizja:", vb3: "Dochód netto:",
+          fbTitle: "Wsparcie i sugestie", fbEmail: "Twój E-mail (opcjonalnie)", fbMsg: "Wiadomość / Sugestia", fbBtn: "Wyślij wiadomość"
+      },
+      hu: {
+          pwTitle: "HOZZÁFÉRÉSI ÁRAK", sub: "Havi előfizetés (30 NAP)", vip: "VIP Csomag (30 Nap + Discord)",
+          notice: "⚠️ <b>FONTOS:</b> Az átutalás közleményébe írd be az <b>E-mail címedet</b>.",
+          paymethod: "Átutalás / QR kód", desc: "Az aktiváló kódot e-mailben küldjük.", receiver: "Kedvezményezett",
+          enter: "Van már kódod? Add meg az e-mailt és a kódot.", btn: "KALKULÁTOR FELOLDÁSA",
+          supTitle: "Problémád van a fizetéssel vagy kóddal?", supDesc: "Írd meg nekünk itt.", supBtn: "Üzenet küldése",
+          tab1: "1. Kína / Import", tab2: "2. Vinted / Helyi Flip", tab3: "3. Támogatás / Visszajelzés",
+          c1Items: "1. Tárgyak a Csomagban", c1Add: "+ Új Tárgy", c1Log: "Ügynök & Logisztika", c1Agent: "Ügynök Platform", c1Country: "Célország",
+          cb1: "+ Karton sarkak (+1.5€)", cb2: "+ Buborékfólia (+2€)", cb3: "+ Vízálló tasak (+1€)", cb4: "+ Biztosítás (3%)",
+          c1SellPlat: "3. Értékesítési Platform", c1SellPlatLbl: "Hol fogod eladni?", c1Over: "Csomag Összegzés", c1Net: "Tiszta Haszon",
+          b1: "Termékek ára összesen:", b2: "Csomag súlya:", b3: "Postaköltség:", b4: "Díjak és csomagolás:", b5: "Összes Költség:", b6: "Tervezett Bevétel:", b7: "Min. Eladási Ár (Break-Even):",
+          vTitle: "Vinted / Helyi Flip", vBuy: "Vásárlási ár (€)", vFees: "Posta + Díjak (€)", vReno: "Tisztítás (€)", vSell: "Eladási ár (€)", vPlat: "Platform", vRes: "Eredmény", vNet: "Tiszta Haszon", vb1: "Összes Költség:", vb2: "Eladási díj:", vb3: "Nettó Hozam:",
+          fbTitle: "Támogatás és Javaslatok", fbEmail: "E-mail címed (opcionális)", fbMsg: "Üzenet / Javaslat", fbBtn: "Üzenet küldése"
+      }
+  };
 
-        // FEEDBACK SUBMISSION TO FIREBASE
-        function sendFeedback() {
-            const email = document.getElementById('fb-email').value;
-            const msg = document.getElementById('fb-msg').value;
-            const status = document.getElementById('fb-status');
+  function changeLanguage() {
+      const lang = document.getElementById('langSelect').value;
+      const t = translations[lang] || translations['sk'];
 
-            if (!msg) {
-                alert('Prosím zadajte správu.');
-                return;
-            }
+      document.getElementById('t-pw-title').innerText = t.pwTitle;
+      document.getElementById('t-pw-sub').innerText = t.sub;
+      document.getElementById('t-pw-vip').innerText = t.vip;
+      document.getElementById('t-pw-notice').innerHTML = t.notice;
+      document.getElementById('t-pw-paymethod').innerText = t.paymethod;
+      document.getElementById('t-pw-desc').innerText = t.desc;
+      document.getElementById('t-pw-receiver').innerText = t.receiver;
+      document.getElementById('t-pw-enter').innerText = t.enter;
+      document.getElementById('t-pw-btn').innerText = t.btn;
+      
+      if(document.getElementById('t-pw-sup-title')) document.getElementById('t-pw-sup-title').innerText = t.supTitle;
+      if(document.getElementById('t-pw-sup-desc')) document.getElementById('t-pw-sup-desc').innerText = t.supDesc;
+      if(document.getElementById('t-pw-sup-btn')) document.getElementById('t-pw-sup-btn').innerText = t.supBtn;
 
-            database.ref('feedback').push({
-                email: email || 'Anonym',
-                message: msg,
-                timestamp: Date.now()
-            }).then(() => {
-                status.innerText = 'Správa bola úspešne odoslaná!';
-                status.style.display = 'block';
-                document.getElementById('fb-email').value = '';
-                document.getElementById('fb-msg').value = '';
-                setTimeout(() => status.style.display = 'none', 3000);
-            });
-        }
-    </script>
+      document.getElementById('tabBtnChina').innerText = t.tab1;
+      document.getElementById('tabBtnVinted').innerText = t.tab2;
+      document.getElementById('tabBtnFeedback').innerText = t.tab3;
+
+      document.getElementById('t-c1-items').innerText = t.c1Items;
+      document.getElementById('t-c1-add').innerText = t.c1Add;
+      document.getElementById('t-c1-logistics').innerText = t.c1Log;
+      document.getElementById('t-c1-agentlbl').innerText = t.c1Agent;
+      document.getElementById('t-c1-countrylbl').innerText = t.c1Country;
+      document.getElementById('t-c1-cb1').innerText = t.cb1;
+      document.getElementById('t-c1-cb2').innerText = t.cb2;
+      document.getElementById('t-c1-cb3').innerText = t.cb3;
+      document.getElementById('t-c1-cb4').innerText = t.cb4;
+      document.getElementById('t-c1-sellplat').innerText = t.c1SellPlat;
+      document.getElementById('t-c1-sellplatlbl').innerText = t.c1SellPlatLbl;
+      document.getElementById('t-c1-overview').innerText = t.c1Over;
+      document.getElementById('t-c1-netprof').innerText = t.c1Net;
+
+      document.getElementById('t-c1-b1').innerText = t.b1;
+      document.getElementById('t-c1-b2').innerText = t.b2;
+      document.getElementById('t-c1-b3').innerText = t.b3;
+      document.getElementById('t-c1-b4').innerText = t.b4;
+      document.getElementById('t-c1-b5').innerText = t.b5;
+      document.getElementById('t-c1-b6').innerText = t.b6;
+      document.getElementById('t-c1-b7').innerText = t.b7;
+
+      document.getElementById('t-v-title').innerText = t.vTitle;
+      document.getElementById('t-v-buy').innerText = t.vBuy;
+      document.getElementById('t-v-fees').innerText = t.vFees;
+      document.getElementById('t-v-reno').innerText = t.vReno;
+      document.getElementById('t-v-sell').innerText = t.vSell;
+      document.getElementById('t-v-plat').innerText = t.vPlat;
+      document.getElementById('t-v-reshead').innerText = t.vRes;
+      document.getElementById('t-v-netprof').innerText = t.vNet;
+      document.getElementById('t-v-b1').innerText = t.vb1;
+      document.getElementById('t-v-b2').innerText = t.vb2;
+      document.getElementById('t-v-b3').innerText = t.vb3;
+
+      document.getElementById('t-fb-title').innerText = t.fbTitle;
+      document.getElementById('t-fb-email').innerText = t.fbEmail;
+      document.getElementById('t-fb-msg').innerText = t.fbMsg;
+      document.getElementById('t-fb-btn').innerText = t.fbBtn;
+  }
+
+  // KALKULAČKA A INTERAKTÍVNE FUNKCIE
+  let items = [];
+  let activeItemId = null;
+
+  function switchMainTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+  }
+
+  function addNewItem() {
+      const itemId = Date.now();
+      const itemNumber = items.length + 1;
+      
+      let template = { price: 180, currency: 'CNY', category: 'clothing', weight: 800, sellPrice: 85, addBox: true };
+      
+      if (items.length > 0) {
+          const lastItem = items[items.length - 1];
+          template = {
+              price: lastItem.price,
+              currency: lastItem.currency,
+              category: lastItem.category,
+              weight: lastItem.weight,
+              sellPrice: lastItem.sellPrice,
+              addBox: lastItem.addBox
+          };
+      }
+      
+      const newItem = { id: itemId, name: `Predmet #${itemNumber}`, ...template };
+      items.push(newItem);
+      renderTabs();
+      selectItem(itemId);
+  }
+
+  function removeItem(itemId, event) {
+      event.stopPropagation();
+      if (items.length <= 1) return;
+      items = items.filter(i => i.id !== itemId);
+      renderTabs();
+      selectItem(items[items.length - 1].id);
+  }
+
+  function selectItem(itemId) {
+      activeItemId = itemId;
+      document.querySelectorAll('.item-tab-pill').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.item-card-content').forEach(el => el.classList.remove('active'));
+
+      const activePill = document.getElementById(`pill_${itemId}`);
+      const activeContent = document.getElementById(`content_${itemId}`);
+      
+      if (activePill) activePill.classList.add('active');
+      if (activeContent) activeContent.classList.add('active');
+
+      calcChina();
+  }
+
+  function renderTabs() {
+      const tabsBar = document.getElementById('itemTabsBar');
+      const contentsContainer = document.getElementById('itemContentsContainer');
+
+      tabsBar.innerHTML = '';
+      contentsContainer.innerHTML = '';
+
+      items.forEach((item) => {
+          const pill = document.createElement('div');
+          pill.className = 'item-tab-pill';
+          pill.id = `pill_${item.id}`;
+          pill.onclick = () => selectItem(item.id);
+          pill.innerHTML = `
+              <span>${item.name}</span>
+              ${items.length > 1 ? `<button class="btn-remove-pill" onclick="removeItem(${item.id}, event)">✕</button>` : ''}
+          `;
+          tabsBar.appendChild(pill);
+
+          const content = document.createElement('div');
+          content.className = 'item-card-content';
+          content.id = `content_${item.id}`;
+          content.innerHTML = `
+              <div class="grid-2">
+                  <div class="group">
+                      <label>Názov / Označenie</label>
+                      <input type="text" value="${item.name}" onchange="updateItemData(${item.id}, 'name', this.value)">
+                  </div>
+                  <div class="group">
+                      <label>Typ Tovaru</label>
+                      <select onchange="updateItemData(${item.id}, 'category', this.value)">
+                          <option value="clothing" ${item.category === 'clothing' ? 'selected' : ''}>Oblečenie / Bežný tovar (Štandard)</option>
+                          <option value="perfume" ${item.category === 'perfume' ? 'selected' : ''}>Parfém / Tekutiny (Special Liquid Line +35%)</option>
+                          <option value="battery" ${item.category === 'battery' ? 'selected' : ''}>Elektronika / Batérie (Battery Line +20%)</option>
+                          <option value="luxury" ${item.category === 'luxury' ? 'selected' : ''}>Luxus / Značka (Brand Sensitive +15%)</option>
+                      </select>
+                  </div>
+              </div>
+              <div class="grid-2">
+                  <div class="group">
+                      <label>Nákupná Cena</label>
+                      <div class="currency-input">
+                          <input type="number" value="${item.price}" oninput="updateItemData(${item.id}, 'price', parseFloat(this.value)||0)">
+                          <select onchange="updateItemData(${item.id}, 'currency', this.value)">
+                              <option value="CNY" ${item.currency === 'CNY' ? 'selected' : ''}>¥ RMB</option>
+                              <option value="EUR" ${item.currency === 'EUR' ? 'selected' : ''}>€ EUR</option>
+                              <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>$ USD</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div class="group">
+                      <label>Čistá Váha (Gramy)</label>
+                      <input type="number" value="${item.weight}" oninput="updateItemData(${item.id}, 'weight', parseFloat(this.value)||0)">
+                  </div>
+              </div>
+              <div class="grid-2">
+                  <div class="group">
+                      <label>Planovaná Predajná Cena (€)</label>
+                      <input type="number" value="${item.sellPrice}" oninput="updateItemData(${item.id}, 'sellPrice', parseFloat(this.value)||0)">
+                  </div>
+                  <div class="checkbox-item" style="margin-top: 22px;">
+                      <input type="checkbox" id="box_${item.id}" ${item.addBox ? 'checked' : ''} onchange="updateItemData(${item.id}, 'addBox', this.checked)">
+                      <label for="box_${item.id}">Posielať vrátane krabice (+350g)</label>
+                  </div>
+              </div>
+          `;
+          contentsContainer.appendChild(content);
+      });
+  }
+
+  function updateItemData(itemId, field, value) {
+      const item = items.find(i => i.id === itemId);
+      if (item) {
+          item[field] = value;
+          if (field === 'name') {
+              const pillSpan = document.querySelector(`#pill_${itemId} span`);
+              if (pillSpan) pillSpan.innerText = value;
+          }
+          calcChina();
+      }
+  }
+
+  function calcChina() {
+      let totalProductEur = 0;
+      let totalWeightGrams = 0;
+      let totalPlannedSell = 0;
+      let maxCategoryMultiplier = 1.0;
+      let hasSpecialLine = false;
+
+      items.forEach(item => {
+          let eurPrice = item.price;
+          if (item.currency === 'CNY') eurPrice = item.price * 0.131;
+          if (item.currency === 'USD') eurPrice = item.price * 0.92;
+          
+          totalProductEur += eurPrice;
+          totalPlannedSell += item.sellPrice;
+
+          let w = item.weight + (item.addBox ? 350 : 0);
+          totalWeightGrams += w;
+
+          if (item.category === 'perfume') {
+              if (maxCategoryMultiplier < 1.35) maxCategoryMultiplier = 1.35;
+              hasSpecialLine = true;
+          } else if (item.category === 'battery') {
+              if (maxCategoryMultiplier < 1.20) maxCategoryMultiplier = 1.20;
+              hasSpecialLine = true;
+          } else if (item.category === 'luxury') {
+              if (maxCategoryMultiplier < 1.15) maxCategoryMultiplier = 1.15;
+              hasSpecialLine = true;
+          }
+      });
+
+      let agent = document.getElementById('c1_agent').value;
+      let country = document.getElementById('c1_country').value;
+      let platform = document.getElementById('c1_platform').value;
+
+      let topupFeePercent = 0.035;
+      if (agent === 'opbuy') topupFeePercent = 0.030;
+      if (agent === 'acbuy') topupFeePercent = 0.040;
+      let topupCost = totalProductEur * topupFeePercent;
+
+      let countryRates = { SK: 13.8, CZ: 13.5, DE: 12.9, PL: 13.0, HU: 14.1 };
+      let baseRate = countryRates[country] || 13.8;
+      
+      let chinaShipEur = ((totalWeightGrams / 1000) * baseRate + 6.0) * maxCategoryMultiplier;
+
+      let extraPackCost = 0;
+      if (document.getElementById('c1_cornerProtect').checked) extraPackCost += 1.5;
+      if (document.getElementById('c1_bubbleWrap').checked) extraPackCost += 2.0;
+      if (document.getElementById('c1_moistureBag').checked) extraPackCost += 1.0;
+      if (document.getElementById('c1_insurance').checked) extraPackCost += (totalProductEur * 0.03);
+
+      let platformFee = 0;
+      if (platform === 'shopify') platformFee = (totalPlannedSell * 0.029) + 0.30;
+      else if (platform === 'ebay') platformFee = (totalPlannedSell * 0.128) + 0.35;
+      else if (platform === 'stockx') platformFee = totalPlannedSell * 0.12;
+
+      let totalCost = totalProductEur + topupCost + chinaShipEur + extraPackCost + platformFee;
+      let profit = totalPlannedSell - totalCost;
+      let roi = totalCost > 0 ? ((profit / totalCost) * 100) : 0;
+
+      document.getElementById('c1_resProductEur').innerText = totalProductEur.toFixed(2) + ' €';
+      document.getElementById('c1_resChargedWeight').innerText = Math.round(totalWeightGrams) + ' g';
+      document.getElementById('c1_resChinaShip').innerText = chinaShipEur.toFixed(2) + ' €';
+      document.getElementById('c1_resPackFees').innerText = (topupCost + extraPackCost + platformFee).toFixed(2) + ' €';
+      document.getElementById('c1_resTotalCost').innerText = totalCost.toFixed(2) + ' €';
+      document.getElementById('c1_resTotalSell').innerText = totalPlannedSell.toFixed(2) + ' €';
+      document.getElementById('c1_resBreakEven').innerText = totalCost.toFixed(2) + ' €';
+
+      document.getElementById('c1_netProfit').innerText = profit.toFixed(2) + ' €';
+      document.getElementById('c1_netProfit').className = 'value ' + (profit >= 0 ? 'green' : 'red');
+      document.getElementById('c1_roi').innerText = roi.toFixed(1) + '%';
+
+      let statusEl = document.getElementById('c1_status');
+      let riskBox = document.getElementById('c1_riskBox');
+
+      if (profit > 30) { statusEl.innerText = 'ŠPIČKOVÝ HAUL (HIGH MARGIN)'; statusEl.className = 'status-pill bg-green'; }
+      else if (profit >= 0) { statusEl.innerText = 'ZISKOVÝ HAUL'; statusEl.className = 'status-pill bg-green'; }
+      else { statusEl.innerText = 'STRATOVÝ HAUL'; statusEl.className = 'status-pill bg-red'; }
+
+      riskBox.style.display = (totalWeightGrams > 10000 || hasSpecialLine) ? 'block' : 'none';
+  }
+
+  function calcVinted() {
+      let buyPrice = parseFloat(document.getElementById('v_buyPrice').value) || 0;
+      let buyFees = parseFloat(document.getElementById('v_buyFees').value) || 0;
+      let renovation = parseFloat(document.getElementById('v_renovation').value) || 0;
+      let sellPrice = parseFloat(document.getElementById('v_sellPrice').value) || 0;
+      let platform = document.getElementById('v_sellPlatform').value;
+
+      let sellFee = 0;
+      if (platform === 'shopify') sellFee = (sellPrice * 0.029) + 0.30;
+      else if (platform === 'ebay') sellFee = (sellPrice * 0.128) + 0.35;
+
+      let totalBuyCost = buyPrice + buyFees + renovation;
+      let profit = sellPrice - sellFee - totalBuyCost;
+      let roi = totalBuyCost > 0 ? ((profit / totalBuyCost) * 100) : 0;
+
+      document.getElementById('v_resTotalBuy').innerText = totalBuyCost.toFixed(2) + ' €';
+      document.getElementById('v_resSellFee').innerText = sellFee.toFixed(2) + ' €';
+      document.getElementById('v_resNetYield').innerText = (sellPrice - sellFee).toFixed(2) + ' €';
+      
+      document.getElementById('v_netProfit').innerText = profit.toFixed(2) + ' €';
+      document.getElementById('v_netProfit').className = 'value ' + (profit >= 0 ? 'green' : 'red');
+      document.getElementById('v_roi').innerText = roi.toFixed(1) + '%';
+
+      let statusEl = document.getElementById('v_status');
+      statusEl.innerText = profit >= 0 ? 'SUPER LOKÁLNY FLIP' : 'STRATOVÝ FLIP';
+      statusEl.className = 'status-pill ' + (profit >= 0 ? 'bg-green' : 'bg-red');
+  }
+</script>
+
 </body>
 </html>
