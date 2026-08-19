@@ -479,36 +479,70 @@
       return id;
   }
 
-  // OVERENIE KÓDU VOČI FIREBASE DATABÁZE
+  // OVERENIE KÓDU VOČI FIREBASE DATABÁZE (S PODPOROU 24H A MESAČNÝCH KÓDOV)
   function verifyCode() {
-      const code = document.getElementById('input-code').value.trim().toUpperCase();
+      const inputCode = document.getElementById('input-code').value.trim().toUpperCase();
       const errEl = document.getElementById('pw-error');
       const myDeviceId = getDeviceId();
 
-      if (!code) {
+      if (!inputCode) {
           errEl.innerText = "Zadaj prosím aktivačný kód!";
           errEl.style.display = "block";
           return;
       }
 
-      db.ref('codes/' + code).once('value').then((snapshot) => {
-          if (snapshot.exists()) {
-              const data = snapshot.val();
-              
+      db.ref('codes/' + inputCode).once('value').then((snapshot) => {
+          if (!snapshot.exists()) {
+              errEl.innerText = "Neplatný aktivačný kód!";
+              errEl.style.display = "block";
+              return;
+          }
+
+          const data = snapshot.val();
+          const now = Date.now();
+
+          // AK JE TO 24-HODINOVÝ KÓD
+          if (data.type === "24hour") {
+              const hours24 = 24 * 60 * 60 * 1000; // 24 hodín v milisekundách
+
+              // Ak už kód v minulosti vypršal
+              if (data.activatedAt && now > (data.activatedAt + hours24)) {
+                  errEl.innerText = "Platnosť tohto 24-hodinového kódu vypršala!";
+                  errEl.style.display = "block";
+                  return;
+              }
+
+              // Kontrola zariadenia
               if (data.deviceId && data.deviceId !== myDeviceId) {
                   errEl.innerText = "Tento kód už bol použitý na inom zariadení!";
                   errEl.style.display = "block";
               } else {
-                  db.ref('codes/' + code).update({ deviceId: myDeviceId, used: true });
-                  localStorage.setItem('resell_auth_code', code);
+                  let updateData = { deviceId: myDeviceId };
+                  if (!data.activatedAt) {
+                      updateData.activatedAt = now;
+                  }
+                  db.ref('codes/' + inputCode).update(updateData);
+                  
+                  localStorage.setItem('resell_auth_code', inputCode);
                   localStorage.setItem('resell_is_paid', 'true');
                   
                   errEl.style.display = "none";
                   unlockApp();
               }
-          } else {
-              errEl.innerText = "Neplatný aktivačný kód!";
-              errEl.style.display = "block";
+          } 
+          // AK JE TO ŠTANDARDNÝ MESAČNÝ KÓD
+          else {
+              if (data.deviceId && data.deviceId !== myDeviceId) {
+                  errEl.innerText = "Tento kód už bol použitý na inom zariadení!";
+                  errEl.style.display = "block";
+              } else {
+                  db.ref('codes/' + inputCode).update({ deviceId: myDeviceId });
+                  localStorage.setItem('resell_auth_code', inputCode);
+                  localStorage.setItem('resell_is_paid', 'true');
+                  
+                  errEl.style.display = "none";
+                  unlockApp();
+              }
           }
       }).catch(error => {
           console.error("Firebase error:", error);
@@ -525,8 +559,25 @@
       if (savedCode && isPaid === 'true') {
           document.getElementById('input-code').value = savedCode;
           db.ref('codes/' + savedCode).once('value').then((snapshot) => {
-              if (snapshot.exists() && snapshot.val().deviceId === getDeviceId()) {
-                  unlockApp();
+              if (snapshot.exists()) {
+                  const data = snapshot.val();
+                  const myDeviceId = getDeviceId();
+                  const now = Date.now();
+
+                  // Ak je to 24h kód, overíme či nevypršal čas
+                  if (data.type === "24hour" && data.activatedAt) {
+                      const hours24 = 24 * 60 * 60 * 1000;
+                      if (now > (data.activatedAt + hours24)) {
+                          lockApp();
+                          return;
+                      }
+                  }
+
+                  if (data.deviceId === myDeviceId) {
+                      unlockApp();
+                  } else {
+                      lockApp();
+                  }
               } else {
                   lockApp();
               }
